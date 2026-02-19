@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useTransform, type MotionValue } from "framer-motion";
 import { Panel } from "@/components/ui/Panel";
 
 const groups = [
@@ -44,39 +44,75 @@ const groups = [
   },
 ];
 
-export default function OfferingsSection() {
+function OfferingCard({
+  index,
+  title,
+  items,
+  progress,
+}: {
+  index: number;
+  title: string;
+  items: string[];
+  progress: MotionValue<number>;
+}) {
+  const fadeInStart = 0.33 + index * 0.03;
+  const fadeInEnd = 0.46 + index * 0.03;
+  const fadeOutStart = 0.62 + index * 0.02;
+  const fadeOutEnd = 0.78 + index * 0.02;
+
+  const opacity = useTransform(
+    progress,
+    [fadeInStart, fadeInEnd, fadeOutStart, fadeOutEnd],
+    [0, 1, 1, 0],
+  );
+  const x = useTransform(
+    progress,
+    [fadeInStart, fadeInEnd],
+    [index % 2 === 0 ? -52 : 52, 0],
+  );
+
+  return (
+    <motion.div
+      style={{ opacity, x }}
+      className={index % 2 === 0 ? "justify-self-start" : "justify-self-end"}
+    >
+      <Panel magnetStrength={1.2} className="w-[min(720px,92vw)] p-6">
+        <div className="bbh-bartle-regular mb-4 text-2xl text-white">{title}</div>
+        <div className="mono text-[13px] text-white/80">
+          <ul className="space-y-2">
+            {items.map((item) => (
+              <li key={item} className="flex gap-3">
+                <span className="text-white/30">-</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Panel>
+    </motion.div>
+  );
+}
+
+export default function OfferingsSection({
+  progress,
+}: {
+  progress: MotionValue<number>;
+}) {
   return (
     <div className="w-full">
-      <div className="bbh-bartle-regular mb-10 text-[clamp(28px,3.5vw,44px)]">
+      <div className="bbh-bartle-regular mb-8 text-[clamp(28px,3.5vw,44px)]">
         Offerings
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-5">
         {groups.map((group, index) => (
-          <motion.div
+          <OfferingCard
             key={group.title}
-            initial={{ opacity: 0, x: index % 2 === 0 ? -48 : 48 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.35 }}
-            transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1] }}
-            className={index % 2 === 0 ? "justify-self-start" : "justify-self-end"}
-          >
-            <Panel magnetStrength={1.2} className="w-[min(720px,92vw)] p-6">
-              <div className="bbh-bartle-regular mb-4 text-2xl text-white">
-                {group.title}
-              </div>
-              <div className="mono text-[13px] text-white/80">
-                <ul className="space-y-2">
-                  {group.items.map((item) => (
-                    <li key={item} className="flex gap-3">
-                      <span className="text-white/30">—</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Panel>
-          </motion.div>
+            index={index}
+            title={group.title}
+            items={group.items}
+            progress={progress}
+          />
         ))}
       </div>
     </div>

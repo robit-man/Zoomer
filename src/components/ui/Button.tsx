@@ -27,7 +27,7 @@ export function Button({
       ref={buttonRef}
       type={type ?? "button"}
       className={cn(
-        "mono hairline rounded-md px-4 py-2 text-[12px] text-white/85",
+        "mono control hairline px-3 py-2 text-[12px] text-white/85",
         "bg-white/5 hover:bg-white/8 hover:border-white/25 transition-colors duration-200",
         "focus:outline-none focus:ring-2 focus:ring-white/20",
         className,

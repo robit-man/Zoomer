@@ -27,7 +27,7 @@ export default function ContactSection() {
           <div className="mono text-[12px] text-white/45">
             Expect a response within 1-2 business days.
           </div>
-          <Button className="glow">Send</Button>
+          <Button>Send</Button>
         </div>
       </Panel>
 

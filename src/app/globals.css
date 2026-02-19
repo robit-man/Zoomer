@@ -13,11 +13,8 @@
   --muted: rgba(255, 255, 255, 0.55);
   --dim: rgba(255, 255, 255, 0.35);
 
-  --accent: rgba(190, 140, 255, 0.85);
-  --accent-dim: rgba(190, 140, 255, 0.25);
-
-  --r-lg: 22px;
-  --r-md: 16px;
+  --r-panel: 18px;
+  --r-control: 12px;
   --pad-lg: 24px;
   --pad-md: 16px;
   --pad-sm: 12px;
@@ -31,18 +28,7 @@
 html,
 body {
   height: 100%;
-  background:
-    radial-gradient(
-      1200px 800px at 30% 20%,
-      rgba(255, 255, 255, 0.04),
-      transparent 55%
-    ),
-    radial-gradient(
-      900px 600px at 70% 80%,
-      rgba(190, 140, 255, 0.06),
-      transparent 60%
-    ),
-    var(--bg-0);
+  background: var(--bg-0);
   color: var(--text);
 }
 
@@ -68,21 +54,14 @@ body {
 
 @layer components {
   .panel {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 30%),
-      var(--panel);
+    background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: var(--r-lg);
+    border-radius: var(--r-panel);
     backdrop-filter: blur(14px);
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.02) inset,
-      0 20px 60px rgba(0, 0, 0, 0.55);
   }
 
   .panel-strong {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 35%),
-      var(--panel-strong);
+    background: var(--panel-strong);
     border: 1px solid var(--border-strong);
   }
 
@@ -90,10 +69,13 @@ body {
     border: 1px solid var(--border);
   }
 
+  .control {
+    box-sizing: border-box;
+    border-radius: var(--r-control);
+  }
+
   .glow {
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-      0 0 30px var(--accent-dim);
+    border-color: var(--border-strong);
   }
 
   .mono {

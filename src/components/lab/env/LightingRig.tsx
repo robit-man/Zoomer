@@ -3,7 +3,6 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
-import { Environment } from "@react-three/drei";
 import { LAB, HALF_W, HALF_L, H } from "../config";
 import { createPanelMaterial } from "./Materials";
 
@@ -11,19 +10,30 @@ export default function LightingRig() {
   const { scene, gl } = useThree();
   const cfg = LAB.lighting;
 
-  // Set tone mapping on the renderer
+  // Set tone mapping + dark background (no environment map flooding the scene)
   useEffect(() => {
     gl.toneMapping = THREE.ACESFilmicToneMapping;
     gl.toneMappingExposure = cfg.exposure;
-  }, [gl, cfg.exposure]);
+    scene.background = new THREE.Color(0x0a0a0a);
+
+    // Very dim procedural env map for subtle reflections only
+    const pmrem = new THREE.PMREMGenerator(gl);
+    pmrem.compileEquirectangularShader();
+    const darkScene = new THREE.Scene();
+    darkScene.background = new THREE.Color(0x080808);
+    const envMap = pmrem.fromScene(darkScene, 0).texture;
+    scene.environment = envMap;
+    pmrem.dispose();
+
+    return () => {
+      envMap.dispose();
+    };
+  }, [gl, scene, cfg.exposure]);
 
   const panelMat = useMemo(() => createPanelMaterial(), []);
 
   return (
     <group name="fixtures">
-      {/* Environment for reflections */}
-      <Environment preset="studio" background={false} />
-
       {/* Ambient fill */}
       <ambientLight intensity={cfg.ambient} color={0xffffff} />
 
@@ -31,7 +41,6 @@ export default function LightingRig() {
       <group name="overheadPanels">
         {cfg.overhead.zPositions.map((z, i) => (
           <group key={`panel-${i}`} position={[0, cfg.overhead.y, z]}>
-            {/* RectAreaLight pointing down */}
             <rectAreaLight
               width={cfg.overhead.width}
               height={cfg.overhead.height}
@@ -39,7 +48,6 @@ export default function LightingRig() {
               color={cfg.overhead.color}
               rotation={[-Math.PI / 2, 0, 0]}
             />
-            {/* Visible panel mesh */}
             <mesh
               rotation={[-Math.PI / 2, 0, 0]}
               position={[0, 0.01, 0]}
@@ -51,7 +59,7 @@ export default function LightingRig() {
         ))}
       </group>
 
-      {/* Shadow-casting spotlights (aligned with 2 panels) */}
+      {/* Shadow-casting spotlights */}
       <spotLight
         position={[0, cfg.overhead.y, cfg.overhead.zPositions[1]]}
         target-position={[0, 0, cfg.overhead.zPositions[1]]}
@@ -87,7 +95,6 @@ export default function LightingRig() {
         />
       )}
 
-      {/* Accent group placeholder */}
       <group name="accents" />
     </group>
   );

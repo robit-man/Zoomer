@@ -1,31 +1,40 @@
 {
+  "materials": {
+    "floor":   { "color": 1315860 },
+    "wall":    { "color": 1118481 },
+    "ceiling": { "color": 921102 },
+    "trim":    { "color": 1118481 },
+    "strut":   { "color": 1315860 },
+    "desk":    { "color": 1315860 },
+    "deskLeg": { "color": 1118481 }
+  },
   "lighting": {
-    "exposure": 0.7,
-    "ambient": 0.06,
+    "exposure": 0.35,
+    "ambient": 0.02,
     "overhead": {
-      "intensity": 18,
-      "panelEmissive": 0.08
+      "intensity": 8,
+      "panelEmissive": 0.04
     },
     "shadowSpots": {
-      "intensity": 6
+      "intensity": 3
     },
     "floorLift": {
-      "intensity": 0.3
+      "intensity": 0.1
     }
   },
   "wallStrips": {
-    "emissiveBase": 0.5,
-    "emissiveAmplitude": 0.1,
+    "emissiveBase": 0.6,
+    "emissiveAmplitude": 0.15,
     "bleedLight": {
-      "intensity": 1.2
+      "intensity": 1.8
     }
   },
   "post": {
     "bloom": {
       "enabled": true,
-      "intensity": 0.15,
-      "luminanceThreshold": 0.9,
-      "luminanceSmoothing": 0.4
+      "intensity": 0.6,
+      "luminanceThreshold": 0.4,
+      "luminanceSmoothing": 0.7
     }
   }
 }

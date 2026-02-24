@@ -1,76 +1,85 @@
 import * as THREE from "three";
 import { LAB } from "../config";
 
-const m = LAB.materials;
+// NOTE: Always read LAB.materials inside function bodies, never cache at module
+// scope — the tuning JSON patches LAB after module import.
 
 export function createFloorMaterial(): THREE.MeshPhysicalMaterial {
+  const f = LAB.materials.floor;
   return new THREE.MeshPhysicalMaterial({
-    color: m.floor.color,
-    roughness: m.floor.roughness,
-    metalness: m.floor.metalness,
-    clearcoat: m.floor.clearcoat,
-    clearcoatRoughness: m.floor.clearcoatRoughness,
+    color: f.color,
+    roughness: f.roughness,
+    metalness: f.metalness,
+    clearcoat: f.clearcoat,
+    clearcoatRoughness: f.clearcoatRoughness,
     side: THREE.FrontSide,
   });
 }
 
 export function createWallMaterial(): THREE.MeshStandardMaterial {
+  const w = LAB.materials.wall;
   return new THREE.MeshStandardMaterial({
-    color: m.wall.color,
-    roughness: m.wall.roughness,
-    metalness: m.wall.metalness,
+    color: w.color,
+    roughness: w.roughness,
+    metalness: w.metalness,
     side: THREE.FrontSide,
   });
 }
 
 export function createCeilingMaterial(): THREE.MeshStandardMaterial {
+  const c = LAB.materials.ceiling;
   return new THREE.MeshStandardMaterial({
-    color: m.ceiling.color,
-    roughness: m.ceiling.roughness,
-    metalness: m.ceiling.metalness,
+    color: c.color,
+    roughness: c.roughness,
+    metalness: c.metalness,
     side: THREE.FrontSide,
   });
 }
 
 export function createStrutMaterial(): THREE.MeshStandardMaterial {
+  const s = LAB.materials.strut;
   return new THREE.MeshStandardMaterial({
-    color: m.strut.color,
-    roughness: m.strut.roughness,
-    metalness: m.strut.metalness,
+    color: s.color,
+    roughness: s.roughness,
+    metalness: s.metalness,
   });
 }
 
 export function createCableMaterial(): THREE.MeshPhysicalMaterial {
+  const c = LAB.materials.cable;
   return new THREE.MeshPhysicalMaterial({
-    color: m.cable.color,
-    roughness: m.cable.roughness,
-    metalness: m.cable.metalness,
-    clearcoat: m.cable.clearcoat,
-    clearcoatRoughness: m.cable.clearcoatRoughness,
+    color: c.color,
+    roughness: c.roughness,
+    metalness: c.metalness,
+    clearcoat: c.clearcoat,
+    clearcoatRoughness: c.clearcoatRoughness,
   });
 }
 
 export function createDeskMaterial(): THREE.MeshStandardMaterial {
+  const d = LAB.materials.desk;
   return new THREE.MeshStandardMaterial({
-    color: m.desk.color,
-    roughness: m.desk.roughness,
-    metalness: m.desk.metalness,
+    color: d.color,
+    roughness: d.roughness,
+    metalness: d.metalness,
   });
 }
 
 export function createDeskLegMaterial(): THREE.MeshStandardMaterial {
+  const l = LAB.materials.deskLeg;
   return new THREE.MeshStandardMaterial({
-    color: m.deskLeg.color,
-    roughness: m.deskLeg.roughness,
-    metalness: m.deskLeg.metalness,
+    color: l.color,
+    roughness: l.roughness,
+    metalness: l.metalness,
   });
 }
 
 export function createTrimMaterial(): THREE.MeshStandardMaterial {
+  const t = LAB.materials.trim;
   return new THREE.MeshStandardMaterial({
-    color: m.trim.color,
-    roughness: m.trim.roughness,
-    metalness: m.trim.metalness,
+    color: t.color,
+    roughness: t.roughness,
+    metalness: t.metalness,
   });
 }
 

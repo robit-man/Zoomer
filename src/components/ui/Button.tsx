@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useMagnetTargets } from "@/components/background/MagnetTargets";
 import { cn } from "@/components/ui/cn";
 
 export function Button({
@@ -10,21 +8,9 @@ export function Button({
   type,
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const { register } = useMagnetTargets();
-
-  useEffect(() => {
-    const element = buttonRef.current;
-    if (!element) {
-      return;
-    }
-    return register(element, 0.85);
-  }, [register]);
-
   return (
     <button
       {...props}
-      ref={buttonRef}
       type={type ?? "button"}
       className={cn(
         "mono control hairline px-3 py-2 text-[12px] text-white/85",

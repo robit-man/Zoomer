@@ -76,7 +76,7 @@ function OfferingCard({
       style={{ opacity, x }}
       className={index % 2 === 0 ? "justify-self-start" : "justify-self-end"}
     >
-      <Panel magnetStrength={1.2} className="w-[min(720px,92vw)] p-6">
+      <Panel className="w-[min(720px,92vw)] p-6">
         <div className="bbh-bartle-regular mb-4 text-2xl text-white">{title}</div>
         <div className="mono text-[13px] text-white/80">
           <ul className="space-y-2">

@@ -1,0 +1,31 @@
+{
+  "lighting": {
+    "exposure": 0.7,
+    "ambient": 0.06,
+    "overhead": {
+      "intensity": 18,
+      "panelEmissive": 0.08
+    },
+    "shadowSpots": {
+      "intensity": 6
+    },
+    "floorLift": {
+      "intensity": 0.3
+    }
+  },
+  "wallStrips": {
+    "emissiveBase": 0.5,
+    "emissiveAmplitude": 0.1,
+    "bleedLight": {
+      "intensity": 1.2
+    }
+  },
+  "post": {
+    "bloom": {
+      "enabled": true,
+      "intensity": 0.15,
+      "luminanceThreshold": 0.9,
+      "luminanceSmoothing": 0.4
+    }
+  }
+}

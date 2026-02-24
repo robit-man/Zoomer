@@ -12,7 +12,7 @@ export default function ContactSection() {
         Contact
       </div>
 
-      <Panel magnetStrength={1.6} className="max-w-[720px] p-6">
+      <Panel className="max-w-[720px] p-6">
         <div className="label mb-4">Send a message</div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

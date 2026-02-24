@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install @dimforge/rapier3d-compat @types/three)",
+      "Bash(npx next build)"
+    ]
+  }
+}

@@ -7,10 +7,9 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className={cn(
-        "mono control w-full px-4 py-3 text-[13px] text-white/85",
-        "bg-white/4 border border-white/10",
-        "placeholder:text-white/30",
-        "focus:outline-none focus:ring-2 focus:ring-white/15",
+        "mono control w-full border border-black/12 bg-white/65 px-4 py-3 text-[13px] text-black/82",
+        "placeholder:text-black/30",
+        "focus:outline-none focus:ring-2 focus:ring-black/10",
         props.className,
       )}
     />

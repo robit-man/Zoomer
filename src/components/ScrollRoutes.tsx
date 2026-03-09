@@ -8,13 +8,15 @@ import {
   useTransform,
 } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
+import ContactSection from "@/sections/ContactSection";
 import HomeSection from "@/sections/HomeSection";
 import OfferingsSection from "@/sections/OfferingsSection";
-import ContactSection from "@/sections/ContactSection";
 import { cn } from "@/components/ui/cn";
 
 type SectionKey = "home" | "offerings" | "contact";
+type SectionAxis = "x" | "y";
 type SectionMetricMap = Record<SectionKey, number>;
+type SectionAxisMap = Record<SectionKey, SectionAxis>;
 
 const sectionOrder: SectionKey[] = ["home", "offerings", "contact"];
 
@@ -22,6 +24,12 @@ const zeroMetrics: SectionMetricMap = {
   home: 0,
   offerings: 0,
   contact: 0,
+};
+
+const zeroAxes: SectionAxisMap = {
+  home: "y",
+  offerings: "y",
+  contact: "y",
 };
 
 const sectionIndex: Record<SectionKey, number> = {
@@ -32,11 +40,35 @@ const sectionIndex: Record<SectionKey, number> = {
 
 const sections: Record<
   SectionKey,
-  { label: string; path: string; timelinePosition: number }
+  {
+    counter: string;
+    label: string;
+    path: string;
+    timelinePosition: number;
+    title: string;
+  }
 > = {
-  home: { label: "Home", path: "/", timelinePosition: 0 },
-  offerings: { label: "Offerings", path: "/offerings", timelinePosition: 0.52 },
-  contact: { label: "Contact", path: "/contact", timelinePosition: 1 },
+  home: {
+    counter: "01",
+    label: "Focus",
+    path: "/",
+    timelinePosition: 0,
+    title: "Focus Matrix",
+  },
+  offerings: {
+    counter: "02",
+    label: "Tiles",
+    path: "/offerings",
+    timelinePosition: 0.54,
+    title: "Operating Lanes",
+  },
+  contact: {
+    counter: "03",
+    label: "Contact",
+    path: "/contact",
+    timelinePosition: 1,
+    title: "Contact Window",
+  },
 };
 
 function clamp01(value: number) {
@@ -47,7 +79,7 @@ function sectionFromProgress(value: number): SectionKey {
   if (value < 0.36) {
     return "home";
   }
-  if (value < 0.78) {
+  if (value < 0.82) {
     return "offerings";
   }
   return "contact";
@@ -61,6 +93,10 @@ function metricsDiffer(
   return sectionOrder.some((key) => Math.abs(current[key] - next[key]) > epsilon);
 }
 
+function axesDiffer(current: SectionAxisMap, next: SectionAxisMap) {
+  return sectionOrder.some((key) => current[key] !== next[key]);
+}
+
 export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   const initialPosition = sections[initial].timelinePosition;
   const progress = useMotionValue(initialPosition);
@@ -72,9 +108,11 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
     useState<SectionMetricMap>(zeroMetrics);
   const [sectionOffsets, setSectionOffsets] =
     useState<SectionMetricMap>(zeroMetrics);
+  const [sectionAxes, setSectionAxes] = useState<SectionAxisMap>(zeroAxes);
 
   const overflowRef = useRef<SectionMetricMap>(zeroMetrics);
   const offsetsRef = useRef<SectionMetricMap>(zeroMetrics);
+  const axesRef = useRef<SectionAxisMap>(zeroAxes);
 
   const viewportRefs = useRef<Record<SectionKey, HTMLDivElement | null>>({
     home: null,
@@ -90,10 +128,11 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   useEffect(() => {
     const controls = animate(progress, targetProgress, {
       type: "spring",
-      stiffness: 120,
+      stiffness: 122,
       damping: 28,
       mass: 0.9,
     });
+
     return () => controls.stop();
   }, [progress, targetProgress]);
 
@@ -106,8 +145,13 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   }, [sectionOffsets]);
 
   useEffect(() => {
+    axesRef.current = sectionAxes;
+  }, [sectionAxes]);
+
+  useEffect(() => {
     const measureOverflow = () => {
       const nextOverflow: SectionMetricMap = { ...overflowRef.current };
+      const nextAxes: SectionAxisMap = { ...axesRef.current };
 
       for (const key of sectionOrder) {
         const viewport = viewportRefs.current[key];
@@ -118,12 +162,25 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
 
         const viewportHeight = viewport.clientHeight;
         const contentHeight = content.scrollHeight;
-        nextOverflow[key] = Math.max(0, contentHeight - viewportHeight);
+        const viewportWidth = viewport.clientWidth;
+        const contentWidth = content.scrollWidth;
+        const widthOverflow = Math.max(0, contentWidth - viewportWidth);
+        const heightOverflow = Math.max(0, contentHeight - viewportHeight);
+        const axis =
+          widthOverflow > 1 && widthOverflow > heightOverflow + 0.5 ? "x" : "y";
+
+        nextAxes[key] = axis;
+        nextOverflow[key] = axis === "x" ? widthOverflow : heightOverflow;
       }
 
       if (metricsDiffer(overflowRef.current, nextOverflow)) {
         overflowRef.current = nextOverflow;
         setSectionOverflow(nextOverflow);
+      }
+
+      if (axesDiffer(axesRef.current, nextAxes)) {
+        axesRef.current = nextAxes;
+        setSectionAxes(nextAxes);
       }
 
       const clampedOffsets: SectionMetricMap = { ...offsetsRef.current };
@@ -144,6 +201,7 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
     };
 
     const observer = new ResizeObserver(() => measureOverflow());
+
     for (const key of sectionOrder) {
       const viewport = viewportRefs.current[key];
       const content = contentRefs.current[key];
@@ -226,9 +284,11 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   );
 
   useEffect(() => {
+    let touchY = 0;
+
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
-      applyDirectionalInput(event.deltaY * 0.00045, event.deltaY);
+      applyDirectionalInput(event.deltaY * 0.00044, event.deltaY);
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -238,16 +298,41 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
         (event.key === " " && !event.shiftKey)
       ) {
         event.preventDefault();
-        applyDirectionalInput(0.08, 120);
+        applyDirectionalInput(0.085, 120);
       }
+
       if (
         event.key === "ArrowUp" ||
         event.key === "PageUp" ||
         (event.key === " " && event.shiftKey)
       ) {
         event.preventDefault();
-        applyDirectionalInput(-0.08, -120);
+        applyDirectionalInput(-0.085, -120);
       }
+    };
+
+    const handleTouchStart = (event: TouchEvent) => {
+      touchY = event.touches[0]?.clientY ?? 0;
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      const nextTouchY = event.touches[0]?.clientY;
+      if (nextTouchY == null) {
+        return;
+      }
+
+      const delta = touchY - nextTouchY;
+      if (Math.abs(delta) < 4) {
+        return;
+      }
+
+      event.preventDefault();
+      applyDirectionalInput(delta * 0.0013, delta * 2.1);
+      touchY = nextTouchY;
+    };
+
+    const handleTouchEnd = () => {
+      touchY = 0;
     };
 
     const previousHtmlOverflow = document.documentElement.style.overflow;
@@ -257,12 +342,18 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
 
     window.addEventListener("wheel", handleWheel, { passive: false });
     window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd);
 
     return () => {
       document.documentElement.style.overflow = previousHtmlOverflow;
       document.body.style.overflow = previousBodyOverflow;
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
     };
   }, [applyDirectionalInput]);
 
@@ -293,6 +384,7 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   const goToSection = (key: SectionKey) => {
     activeRef.current = key;
     setActiveKey(key);
+
     const nextOffsets = {
       ...offsetsRef.current,
       [key]: 0,
@@ -303,141 +395,184 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
     window.history.replaceState(null, "", sections[key].path);
   };
 
-  const homeX = useTransform(progress, [0, 0.34], [0, 380]);
-  const homeOpacity = useTransform(progress, [0, 0.2, 0.36], [1, 1, 0]);
+  const homeOffsetStyle =
+    sectionAxes.home === "x"
+      ? { x: -sectionOffsets.home }
+      : { y: -sectionOffsets.home };
+  const offeringsOffsetStyle =
+    sectionAxes.offerings === "x"
+      ? { x: -sectionOffsets.offerings }
+      : { y: -sectionOffsets.offerings };
+  const contactOffsetStyle =
+    sectionAxes.contact === "x"
+      ? { x: -sectionOffsets.contact }
+      : { y: -sectionOffsets.contact };
+
+  const homeOpacity = useTransform(progress, [0, 0.4, 0.52], [1, 1, 0]);
   const offeringsOpacity = useTransform(
     progress,
-    [0.3, 0.44, 0.66, 0.8],
+    [0.28, 0.44, 0.76, 0.86],
     [0, 1, 1, 0],
   );
   const offeringsX = useTransform(
     progress,
-    [0.3, 0.44, 0.66, 0.74, 0.8],
-    [28, 0, 0, 172, 246],
+    [0.28, 0.44, 0.76, 0.84],
+    [-140, 0, 0, 220],
   );
-  const offeringsY = useTransform(progress, [0.66, 0.73, 0.8], [0, -20, 12]);
-  const offeringsRotate = useTransform(
-    progress,
-    [0.66, 0.73, 0.8],
-    [0, 3.5, -6],
-  );
-  const contactX = useTransform(progress, [0.74, 0.94], [-140, 0]);
+  const offeringsRotate = useTransform(progress, [0.62, 0.78, 0.86], [0, 1.5, -2]);
+  const contactX = useTransform(progress, [0.74, 0.94], [-160, 0]);
   const contactOpacity = useTransform(progress, [0.74, 0.94], [0, 1]);
 
   return (
-    <main className="relative h-screen w-full overflow-hidden">
-      <div className="relative mx-auto h-full w-full max-w-[1120px] px-6">
-        <div className="absolute right-6 top-4 z-40 flex justify-end">
-          <nav className="panel panel-strong mono flex items-center gap-2 p-2">
-            {(Object.keys(sections) as SectionKey[]).map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => goToSection(key)}
-                aria-current={activeKey === key ? "page" : undefined}
+    <main className="site-shell relative h-dvh w-full overflow-hidden">
+      <div className="relative mx-auto grid h-full w-full max-w-[1680px] grid-rows-[auto_minmax(0,1fr)] overflow-hidden lg:grid-cols-[320px_minmax(0,1fr)] lg:grid-rows-1">
+        <aside className="relative flex min-h-[240px] flex-col overflow-hidden border-b border-black/15 bg-[var(--acid)] px-5 py-5 text-[var(--ink)] md:px-6 md:py-6 lg:h-full lg:border-b-0 lg:border-r">
+          <div className="flex items-start justify-between gap-6">
+            <div>
+              <div className="label text-black/58">Zoomer consulting</div>
+              <div className="mt-2 text-[10px] uppercase tracking-[0.22em] text-black/48">
+                plan / arch / make
+              </div>
+            </div>
+            <div className="hidden text-right text-[10px] uppercase tracking-[0.18em] text-black/42 sm:block">
+              Global Reach
+              <br />
+              Remote-first
+            </div>
+          </div>
+
+          <div className="flex flex-1 flex-col justify-between gap-8 py-6 lg:py-10">
+            <div className="display text-[clamp(4.8rem,14vw,12rem)]  tracking-[0.02em] lg:[writing-mode:vertical-rl] lg:rotate-180 lg:self-start">
+              ZOOMER
+            </div>
+
+            <div className="max-w-[18rem] space-y-5">
+              <p className="text-[clamp(0.98rem,1.45vw,1.1rem)] leading-tight text-black/84">
+                Concept + Structure &gt; Impact
+              </p>
+
+              <div className="grid gap-2.5">
+                {sectionOrder.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => goToSection(key)}
+                    aria-current={activeKey === key ? "page" : undefined}
+                    className={cn(
+                      "control flex items-center justify-between border px-4 py-3 text-left transition-colors duration-200",
+                      activeKey === key
+                        ? "border-black bg-black text-[var(--acid)]"
+                        : "border-black/14 bg-black/5 text-black/66 hover:bg-black/9",
+                    )}
+                  >
+                    <span className="label">{sections[key].counter}</span>
+                    <span className="display text-[1.45rem] leading-none">
+                      {sections[key].label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <section className="relative min-h-0 overflow-hidden">
+          <div className="absolute inset-0" />
+
+          <motion.section
+            style={{ opacity: homeOpacity }}
+            className={cn(
+              "absolute inset-0 px-0 pb-0 pt-0",
+              activeKey === "home" ? "pointer-events-auto" : "pointer-events-none",
+            )}
+          >
+            <div
+              ref={(element) => {
+                viewportRefs.current.home = element;
+              }}
+              className="h-full w-full overflow-hidden"
+            >
+              <motion.div
+                ref={(element) => {
+                  contentRefs.current.home = element;
+                }}
+                style={homeOffsetStyle}
                 className={cn(
-                  "control px-3 py-2 text-[11px] uppercase tracking-[0.12em] transition",
-                  "border border-transparent",
-                  activeKey === key
-                    ? "border-white/20 bg-white/10 text-white"
-                    : "text-white/55 hover:border-white/15 hover:text-white/85",
+                  "h-full min-w-full",
+                  sectionAxes.home === "y" && sectionOverflow.home <= 1
+                    ? "flex items-center"
+                    : "",
                 )}
               >
-                {sections[key].label}
-              </button>
-            ))}
-          </nav>
-        </div>
+                <HomeSection progress={progress} />
+              </motion.div>
+            </div>
+          </motion.section>
 
-        <motion.section
-          style={{ x: homeX, opacity: homeOpacity }}
-          className={cn(
-            "absolute inset-0",
-            activeKey === "home" ? "pointer-events-auto" : "pointer-events-none",
-          )}
-        >
-          <div
-            ref={(element) => {
-              viewportRefs.current.home = element;
-            }}
-            className="h-full w-full overflow-hidden"
+          <motion.section
+            style={{ x: offeringsX, rotate: offeringsRotate, opacity: offeringsOpacity }}
+            className={cn(
+              "absolute inset-0 px-4 pb-4 pt-4 md:px-6 md:pb-6 md:pt-6 lg:px-8 lg:pb-8 lg:pt-8",
+              activeKey === "offerings"
+                ? "pointer-events-auto"
+                : "pointer-events-none",
+            )}
           >
-            <motion.div
+            <div
               ref={(element) => {
-                contentRefs.current.home = element;
+                viewportRefs.current.offerings = element;
               }}
-              style={{ y: -sectionOffsets.home }}
-              className={cn(
-                "min-h-full",
-                sectionOverflow.home > 1 ? "" : "flex items-center",
-              )}
+              className="h-full w-full overflow-hidden"
             >
-              <HomeSection progress={progress} />
-            </motion.div>
-          </div>
-        </motion.section>
+              <motion.div
+                ref={(element) => {
+                  contentRefs.current.offerings = element;
+                }}
+                style={offeringsOffsetStyle}
+                className={cn(
+                  sectionAxes.offerings === "x" ? "h-full min-w-full" : "w-full",
+                  sectionAxes.offerings === "y" && sectionOverflow.offerings <= 1
+                    ? "flex h-full items-center"
+                    : "",
+                )}
+              >
+                <OfferingsSection progress={progress} />
+              </motion.div>
+            </div>
+          </motion.section>
 
-        <motion.section
-          style={{
-            x: offeringsX,
-            y: offeringsY,
-            rotate: offeringsRotate,
-            opacity: offeringsOpacity,
-          }}
-          className={cn(
-            "absolute inset-0 py-16",
-            activeKey === "offerings"
-              ? "pointer-events-auto"
-              : "pointer-events-none",
-          )}
-        >
-          <div
-            ref={(element) => {
-              viewportRefs.current.offerings = element;
-            }}
-            className="h-full w-full overflow-hidden"
+          <motion.section
+            style={{ x: contactX, opacity: contactOpacity }}
+            className={cn(
+              "absolute inset-0 px-4 pb-4 pt-4 md:px-6 md:pb-6 md:pt-6 lg:px-8 lg:pb-8 lg:pt-8",
+              activeKey === "contact"
+                ? "pointer-events-auto"
+                : "pointer-events-none",
+            )}
           >
-            <motion.div
+            <div
               ref={(element) => {
-                contentRefs.current.offerings = element;
+                viewportRefs.current.contact = element;
               }}
-              style={{ y: -sectionOffsets.offerings }}
-              className="min-h-full"
+              className="h-full w-full overflow-hidden"
             >
-              <OfferingsSection progress={progress} />
-            </motion.div>
-          </div>
-        </motion.section>
-
-        <motion.section
-          style={{ x: contactX, opacity: contactOpacity }}
-          className={cn(
-            "absolute inset-0 py-20",
-            activeKey === "contact"
-              ? "pointer-events-auto"
-              : "pointer-events-none",
-          )}
-        >
-          <div
-            ref={(element) => {
-              viewportRefs.current.contact = element;
-            }}
-            className="h-full w-full overflow-hidden"
-          >
-            <motion.div
-              ref={(element) => {
-                contentRefs.current.contact = element;
-              }}
-              style={{ y: -sectionOffsets.contact }}
-              className={cn(
-                "min-h-full",
-                sectionOverflow.contact > 1 ? "" : "flex items-center",
-              )}
-            >
-              <ContactSection />
-            </motion.div>
-          </div>
-        </motion.section>
+              <motion.div
+                ref={(element) => {
+                  contentRefs.current.contact = element;
+                }}
+                style={contactOffsetStyle}
+                className={cn(
+                  sectionAxes.contact === "x" ? "h-full min-w-full" : "w-full",
+                  sectionAxes.contact === "y" && sectionOverflow.contact <= 1
+                    ? "flex h-full items-center"
+                    : "",
+                )}
+              >
+                <ContactSection />
+              </motion.div>
+            </div>
+          </motion.section>
+        </section>
       </div>
     </main>
   );

@@ -149,7 +149,20 @@ textarea {
   }
 
   .control {
-    border-radius: var(--r-control);
+    position: relative;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 1rem 100%, 0 calc(100% - 1rem));
+  }
+
+  .control::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 7px;
+    height: 22px;
+    width: 1.2px;
+    background-color: var(--line);
+    transform-origin: 0% 50%;
+    transform: rotate(-45deg) ;
   }
 
   .rule {
@@ -159,68 +172,60 @@ textarea {
   }
 
   .flag-indent-y {
-    clip-path: polygon(
-      50% 0rem,
-      calc(50% + 0rem) 0,
-      100% 0,
-      100% 100%,
-      calc(50% + 0rem) 100%,
-      50% calc(100% - 0rem),
-      calc(50% - 0rem) 100%,
-      0 100%,
-      0 0,
-      calc(50% - 0rem) 0
-    );
+    clip-path: polygon(50% 0rem,
+        calc(50% + 0rem) 0,
+        100% 0,
+        100% 100%,
+        calc(50% + 0rem) 100%,
+        50% calc(100% - 0rem),
+        calc(50% - 0rem) 100%,
+        0 100%,
+        0 0,
+        calc(50% - 0rem) 0);
     transition: clip-path 280ms cubic-bezier(0.22, 1, 0.36, 1);
     will-change: clip-path;
   }
 
   .flag-indent-y:hover,
   .flag-indent-y:focus-within {
-    clip-path: polygon(
-      50% 1rem,
-      calc(50% + 1rem) 0,
-      100% 0,
-      100% 100%,
-      calc(50% + 1rem) 100%,
-      50% calc(100% - 1rem),
-      calc(50% - 1rem) 100%,
-      0 100%,
-      0 0,
-      calc(50% - 1rem) 0
-    );
+    clip-path: polygon(50% 1rem,
+        calc(50% + 1rem) 0,
+        100% 0,
+        100% 100%,
+        calc(50% + 1rem) 100%,
+        50% calc(100% - 1rem),
+        calc(50% - 1rem) 100%,
+        0 100%,
+        0 0,
+        calc(50% - 1rem) 0);
   }
 
   .flag-indent-x {
-    clip-path: polygon(
-      0 calc(50% - 0rem),
-      0rem 50%,
-      0 calc(50% + 0rem),
-      0 100%,
-      100% 100%,
-      100% calc(50% + 0rem),
-      calc(100% - 0rem) 50%,
-      100% calc(50% - 0rem),
-      100% 0,
-      0 0
-    );
+    clip-path: polygon(0 calc(50% - 0rem),
+        0rem 50%,
+        0 calc(50% + 0rem),
+        0 100%,
+        100% 100%,
+        100% calc(50% + 0rem),
+        calc(100% - 0rem) 50%,
+        100% calc(50% - 0rem),
+        100% 0,
+        0 0);
     transition: clip-path 280ms cubic-bezier(0.22, 1, 0.36, 1);
     will-change: clip-path;
   }
 
   .flag-indent-x:hover,
   .flag-indent-x:focus-within {
-    clip-path: polygon(
-      0 calc(50% - 1rem),
-      1rem 50%,
-      0 calc(50% + 1rem),
-      0 100%,
-      100% 100%,
-      100% calc(50% + 1rem),
-      calc(100% - 1rem) 50%,
-      100% calc(50% - 1rem),
-      100% 0,
-      0 0
-    );
+    clip-path: polygon(0 calc(50% - 1rem),
+        1rem 50%,
+        0 calc(50% + 1rem),
+        0 100%,
+        100% 100%,
+        100% calc(50% + 1rem),
+        calc(100% - 1rem) 50%,
+        100% calc(50% - 1rem),
+        100% 0,
+        0 0);
   }
 }

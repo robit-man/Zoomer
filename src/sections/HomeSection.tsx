@@ -624,7 +624,7 @@ function FocusTile({
           </div>
           <h3
             ref={titleRef}
-            className="display max-w-[14ch] text-right text-[clamp(1.18rem,1.72vw,2rem)] leading-[0.94] pr-1"
+            className="display max-w-[14ch] text-right text-[clamp(1.18rem,1.72vw,2rem)] leading-[0.94] pr-2"
           >
             {title}
           </h3>

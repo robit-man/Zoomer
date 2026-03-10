@@ -1,19 +1,20 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import type { MotionValue } from "framer-motion";
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import LabScene from "@/components/lab/LabScene";
-import DebugUI, { type DebugSettings } from "@/components/lab/util/DebugUI";
+import type { DebugSettings } from "@/components/lab/util/DebugUI";
 import { useTuning } from "@/components/lab/useTuning";
 
-export default function Background() {
+export default function Background({
+  progress,
+}: {
+  progress: MotionValue<number>;
+}) {
   const { ready, config } = useTuning();
 
-  const [debugSettings, setDebugSettings] = useState<DebugSettings | null>(null);
-
-  // Initialize debug defaults from tuned config once ready
-  const effectiveDebug: DebugSettings = debugSettings ?? {
+  const effectiveDebug: DebugSettings = {
     showCables: true,
     showWallStrips: true,
     bloomEnabled: config.post.bloom.enabled,
@@ -21,35 +22,29 @@ export default function Background() {
     exposure: config.lighting.exposure,
   };
 
-  const handleDebugChange = useCallback((settings: DebugSettings) => {
-    setDebugSettings(settings);
-  }, []);
-
   if (!ready) return null;
 
   return (
-    <>
-      <div className="fixed inset-0 z-0">
-        <Canvas
-          dpr={[1, 2]}
-          gl={{
-            antialias: true,
-            toneMapping: THREE.ACESFilmicToneMapping,
-            toneMappingExposure: effectiveDebug.exposure,
-            outputColorSpace: THREE.SRGBColorSpace,
-          }}
-          shadows={{ type: THREE.PCFSoftShadowMap }}
-          camera={{
-            position: [0, 2.5, 8],
-            fov: 55,
-            near: 0.1,
-            far: 100,
-          }}
-        >
-          <LabScene debugSettings={effectiveDebug} />
-        </Canvas>
-      </div>
-      <DebugUI onChange={handleDebugChange} />
-    </>
+    <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+      <Canvas
+        dpr={[1, 2]}
+        gl={{
+          antialias: true,
+          alpha: true,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: effectiveDebug.exposure,
+          outputColorSpace: THREE.SRGBColorSpace,
+        }}
+        shadows={{ type: THREE.PCFSoftShadowMap }}
+        camera={{
+          position: [0, 1.68, 10.8],
+          fov: 52,
+          near: 0.1,
+          far: 100,
+        }}
+      >
+        <LabScene debugSettings={effectiveDebug} progress={progress} />
+      </Canvas>
+    </div>
   );
 }

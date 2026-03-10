@@ -309,7 +309,7 @@ function LaneColumn({
     <motion.article style={{ opacity, x }} className="min-h-0 overflow-hidden xl:h-full">
       <ToneBlock
         tone={column.tone}
-        className="grid h-full min-h-[520px] grid-rows-[auto_minmax(0,1fr)] xl:min-h-0"
+        className="grid h-full min-h-[580px] grid-rows-[auto_minmax(0,1fr)] xl:min-h-0"
       >
         <CrosshairAccent
           dark={isDark}
@@ -401,7 +401,7 @@ export default function OfferingsSection({
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      <div className="mx-auto grid w-full max-w-[84rem] gap-2 md:gap-3 xl:h-[min(44rem,calc(100svh-4rem))] xl:grid-cols-3">
+      <div className="mx-auto grid w-full max-w-[84rem] gap-2 md:gap-3 xl:h-[min(50rem,calc(100svh-2.5rem))] xl:grid-cols-3">
         {offeringColumns.map((column, index) => (
           <LaneColumn
             key={column.id}

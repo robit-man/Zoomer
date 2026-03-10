@@ -1,40 +1,56 @@
 {
   "materials": {
-    "floor":   { "color": 1315860 },
-    "wall":    { "color": 1118481 },
-    "ceiling": { "color": 921102 },
-    "trim":    { "color": 1118481 },
-    "strut":   { "color": 1315860 },
-    "desk":    { "color": 1315860 },
-    "deskLeg": { "color": 1118481 }
+    "floor": { "color": 2892327, "roughness": 0.92, "clearcoat": 0.04, "clearcoatRoughness": 0.96 },
+    "wall": { "color": 15855591, "roughness": 0.68 },
+    "ceiling": { "color": 3486255, "roughness": 0.96 },
+    "rack": { "color": 2828582, "roughness": 0.84, "metalness": 0.16 },
+    "shelf": { "color": 3420461, "roughness": 0.9, "metalness": 0.08 },
+    "trim": { "color": 14804789, "roughness": 0.62 },
+    "strut": { "color": 13224913, "roughness": 0.44, "metalness": 0.34 },
+    "desk": { "color": 15722469, "roughness": 0.54 },
+    "deskLeg": { "color": 11449532, "roughness": 0.4, "metalness": 0.44 }
   },
   "lighting": {
-    "exposure": 0.55,
-    "ambient": 0.04,
+    "exposure": 0.38,
+    "ambient": 0,
     "overhead": {
-      "intensity": 14,
-      "panelEmissive": 0.08
+      "intensity": 0,
+      "panelEmissive": 0
     },
     "shadowSpots": {
-      "intensity": 5
+      "intensity": 0
     },
     "floorLift": {
-      "intensity": 0.2
+      "intensity": 0
     }
   },
   "wallStrips": {
-    "emissiveBase": 0.7,
-    "emissiveAmplitude": 0.15,
+    "color": 65471,
+    "width": 0.085,
+    "height": 2.7,
+    "pocketDepth": 0.085,
+    "pocketWidth": 0.24,
+    "slotInset": 0.045,
+    "lightInset": 0.06,
+    "slotLightIntensity": 4.2,
+    "slotLightDistance": 10,
+    "slotLightAngle": 0.58,
+    "shadowEvery": 4,
+    "marginFromFloor": 0.42,
+    "emissiveBase": 1.18,
+    "emissiveAmplitude": 0.16,
+    "flickerSpeed": 0.52,
     "bleedLight": {
-      "intensity": 2.2
+      "intensity": 4.8,
+      "color": 65471
     }
   },
   "post": {
     "bloom": {
       "enabled": true,
-      "intensity": 1.0,
-      "luminanceThreshold": 0.3,
-      "luminanceSmoothing": 0.6
+      "intensity": 0.7,
+      "luminanceThreshold": 0.44,
+      "luminanceSmoothing": 0.78
     }
   }
 }

@@ -45,6 +45,24 @@ export function createStrutMaterial(): THREE.MeshStandardMaterial {
   });
 }
 
+export function createRackMaterial(): THREE.MeshStandardMaterial {
+  const r = LAB.materials.rack;
+  return new THREE.MeshStandardMaterial({
+    color: r.color,
+    roughness: r.roughness,
+    metalness: r.metalness,
+  });
+}
+
+export function createShelfMaterial(): THREE.MeshStandardMaterial {
+  const s = LAB.materials.shelf;
+  return new THREE.MeshStandardMaterial({
+    color: s.color,
+    roughness: s.roughness,
+    metalness: s.metalness,
+  });
+}
+
 export function createCableMaterial(): THREE.MeshPhysicalMaterial {
   const c = LAB.materials.cable;
   return new THREE.MeshPhysicalMaterial({
@@ -83,10 +101,10 @@ export function createTrimMaterial(): THREE.MeshStandardMaterial {
   });
 }
 
-export function createStripMaterial(phase: number): THREE.MeshStandardMaterial {
+export function createStripMaterial(phase: number, color = LAB.wallStrips.color): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
     color: 0x222222,
-    emissive: LAB.wallStrips.color,
+    emissive: color,
     emissiveIntensity: LAB.wallStrips.emissiveBase,
     side: THREE.DoubleSide,
     userData: { phase },

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import * as THREE from "three";
 import { LAB, HALF_W, HALF_L, H } from "../config";
 import {
   createFloorMaterial,
@@ -43,6 +42,7 @@ export default function RoomGeometry() {
       <mesh
         name="ceiling"
         position={[0, H + ft / 2, 0]}
+        receiveShadow
         material={ceilMat}
       >
         <boxGeometry args={[W, ft, L]} />
@@ -52,6 +52,7 @@ export default function RoomGeometry() {
       <mesh
         name="wall_N"
         position={[0, H / 2, HALF_L + wt / 2]}
+        receiveShadow
         material={wallMat}
       >
         <boxGeometry args={[W, H, wt]} />
@@ -61,6 +62,7 @@ export default function RoomGeometry() {
       <mesh
         name="wall_S"
         position={[0, H / 2, -HALF_L - wt / 2]}
+        receiveShadow
         material={wallMat}
       >
         <boxGeometry args={[W, H, wt]} />
@@ -70,6 +72,7 @@ export default function RoomGeometry() {
       <mesh
         name="wall_E"
         position={[HALF_W + wt / 2, H / 2, 0]}
+        receiveShadow
         material={wallMat}
       >
         <boxGeometry args={[wt, H, L]} />
@@ -79,6 +82,7 @@ export default function RoomGeometry() {
       <mesh
         name="wall_W"
         position={[-HALF_W - wt / 2, H / 2, 0]}
+        receiveShadow
         material={wallMat}
       >
         <boxGeometry args={[wt, H, L]} />
@@ -87,19 +91,19 @@ export default function RoomGeometry() {
       {/* Trims (baseboards) */}
       <group name="trims">
         {/* East wall baseboard */}
-        <mesh position={[HALF_W - trimD / 2, trimH / 2, 0]} material={trimMat}>
+        <mesh position={[HALF_W - trimD / 2, trimH / 2, 0]} receiveShadow material={trimMat}>
           <boxGeometry args={[trimD, trimH, L]} />
         </mesh>
         {/* West wall baseboard */}
-        <mesh position={[-HALF_W + trimD / 2, trimH / 2, 0]} material={trimMat}>
+        <mesh position={[-HALF_W + trimD / 2, trimH / 2, 0]} receiveShadow material={trimMat}>
           <boxGeometry args={[trimD, trimH, L]} />
         </mesh>
         {/* North wall baseboard */}
-        <mesh position={[0, trimH / 2, HALF_L - trimD / 2]} material={trimMat}>
+        <mesh position={[0, trimH / 2, HALF_L - trimD / 2]} receiveShadow material={trimMat}>
           <boxGeometry args={[W, trimH, trimD]} />
         </mesh>
         {/* South wall baseboard */}
-        <mesh position={[0, trimH / 2, -HALF_L + trimD / 2]} material={trimMat}>
+        <mesh position={[0, trimH / 2, -HALF_L + trimD / 2]} receiveShadow material={trimMat}>
           <boxGeometry args={[W, trimH, trimD]} />
         </mesh>
       </group>

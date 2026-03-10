@@ -8,6 +8,7 @@ import {
   useTransform,
 } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
+import Background from "@/components/background/Background";
 import ContactSection from "@/sections/ContactSection";
 import HomeSection from "@/sections/HomeSection";
 import OfferingsSection from "@/sections/OfferingsSection";
@@ -425,8 +426,9 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
 
   return (
     <main className="site-shell relative h-dvh w-full overflow-hidden">
-      <div className="relative mx-auto grid h-full w-full max-w-[1680px] grid-rows-[auto_minmax(0,1fr)] overflow-hidden lg:grid-cols-[320px_minmax(0,1fr)] lg:grid-rows-1">
-        <aside className="relative flex min-h-[240px] flex-col overflow-hidden border-b border-black/15 bg-[var(--acid)] px-5 py-5 text-[var(--ink)] md:px-6 md:py-6 lg:h-full lg:border-b-0 lg:border-r">
+      <Background progress={progress} />
+      <div className="relative z-10 mx-auto grid h-full w-full max-w-[1680px] grid-rows-[auto_minmax(0,1fr)] overflow-hidden lg:grid-cols-[320px_minmax(0,1fr)] lg:grid-rows-1">
+        <aside className="relative flex min-h-[240px] flex-col overflow-hidden border-b border-black/15 bg-[var(--acid)] px-5 py-5 text-[var(--ink)] md:px-6 md:py-6 lg:h-full lg:border-b-0 lg:border-r lg:border-l">
           <div className="flex items-start justify-between gap-6">
             <div>
               <div className="label text-black/58">Zoomer consulting</div>
@@ -434,23 +436,14 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
                 plan / arch / make
               </div>
             </div>
-            <div className="hidden text-right text-[10px] uppercase tracking-[0.18em] text-black/42 sm:block">
-              Global Reach
-              <br />
-              Remote-first
-            </div>
           </div>
 
           <div className="flex flex-1 flex-col justify-between gap-8 py-6 lg:py-10">
-            <div className="display text-[clamp(4.8rem,14vw,12rem)]  tracking-[0.02em] lg:[writing-mode:vertical-rl] lg:rotate-180 lg:self-start">
+            <div className="display text-[clamp(4.8rem,14vw,12rem)] m-auto tracking-[0.02em] lg:[writing-mode:vertical-rl] lg:rotate-180 lg:self-start">
               ZOOMER
             </div>
 
             <div className="max-w-[18rem] space-y-5">
-              <p className="text-[clamp(0.98rem,1.45vw,1.1rem)] leading-tight text-black/84">
-                Concept + Structure &gt; Impact
-              </p>
-
               <div className="grid gap-2.5">
                 {sectionOrder.map((key) => (
                   <button

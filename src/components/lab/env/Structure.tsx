@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import * as THREE from "three";
-import { LAB, HALF_W, HALF_L, H } from "../config";
+import { LAB, HALF_L, H } from "../config";
 import { createStrutMaterial } from "./Materials";
 
 /** Exported clamp positions for CableSystem to use */
@@ -50,10 +50,10 @@ export default function Structure() {
       {/* Ceiling struts */}
       <group name="ceilingStruts">
         {/* Two long rails along Z */}
-        <mesh position={[cfg.railOffsetX, H - railS / 2, 0]} material={strutMat}>
+        <mesh position={[cfg.railOffsetX, H - railS / 2, 0]} castShadow receiveShadow material={strutMat}>
           <boxGeometry args={[railS, railS, L - 0.5]} />
         </mesh>
-        <mesh position={[-cfg.railOffsetX, H - railS / 2, 0]} material={strutMat}>
+        <mesh position={[-cfg.railOffsetX, H - railS / 2, 0]} castShadow receiveShadow material={strutMat}>
           <boxGeometry args={[railS, railS, L - 0.5]} />
         </mesh>
 
@@ -64,6 +64,8 @@ export default function Structure() {
             <mesh
               key={`cross-${i}`}
               position={[0, H - railS / 2, z]}
+              castShadow
+              receiveShadow
               material={strutMat}
             >
               <boxGeometry args={[cfg.railOffsetX * 2, railS * 0.7, railS * 0.7]} />
@@ -75,18 +77,22 @@ export default function Structure() {
       {/* Cable tray */}
       <group name="cableTrays">
         {/* Tray bottom */}
-        <mesh position={[tray.x, tray.y - tray.height, 0]} material={strutMat}>
+        <mesh position={[tray.x, tray.y - tray.height, 0]} castShadow receiveShadow material={strutMat}>
           <boxGeometry args={[tray.width, tray.wallThickness, L - 1]} />
         </mesh>
         {/* Tray sides */}
         <mesh
           position={[tray.x - tray.width / 2, tray.y - tray.height / 2, 0]}
+          castShadow
+          receiveShadow
           material={strutMat}
         >
           <boxGeometry args={[tray.wallThickness, tray.height, L - 1]} />
         </mesh>
         <mesh
           position={[tray.x + tray.width / 2, tray.y - tray.height / 2, 0]}
+          castShadow
+          receiveShadow
           material={strutMat}
         >
           <boxGeometry args={[tray.wallThickness, tray.height, L - 1]} />
@@ -96,7 +102,13 @@ export default function Structure() {
       {/* Clamps */}
       <group name="clamps">
         {clamps.map((pos, i) => (
-          <mesh key={`clamp-${i}`} position={[pos.x, pos.y, pos.z]} material={strutMat}>
+          <mesh
+            key={`clamp-${i}`}
+            position={[pos.x, pos.y, pos.z]}
+            castShadow
+            receiveShadow
+            material={strutMat}
+          >
             <boxGeometry args={[tray.width + 0.02, 0.015, 0.03]} />
           </mesh>
         ))}

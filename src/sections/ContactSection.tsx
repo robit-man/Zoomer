@@ -264,10 +264,10 @@ export default function ContactSection() {
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      <div className="mx-auto grid w-full max-w-[86rem] gap-2 md:gap-3 xl:h-[min(52rem,calc(100svh-4rem))] xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,460px)]">
+      <div className="mx-auto grid w-full max-w-[86rem] gap-2 md:gap-3 xl:h-[min(58rem,calc(100svh-2.5rem))] xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,460px)]">
         <ToneBlock
           tone="light"
-          className="grid h-full min-h-[620px] grid-rows-[minmax(0,1fr)_auto] xl:min-h-0"
+          className="grid h-full min-h-[700px] grid-rows-[minmax(0,1fr)_auto] xl:min-h-0"
         >
           <CrosshairAccent
             dark={false}
@@ -347,7 +347,7 @@ export default function ContactSection() {
           </div>
         </ToneBlock>
 
-        <div className="grid min-h-[620px] gap-2 md:gap-3 xl:h-full xl:min-h-0 xl:grid-rows-[repeat(5,minmax(0,1fr))]">
+        <div className="grid min-h-[700px] gap-2 md:gap-3 xl:h-full xl:min-h-0 xl:grid-rows-[repeat(5,minmax(0,1fr))]">
           {contactLinks.map((item, index) => (
             <ContactLinkTile
               key={item.label}

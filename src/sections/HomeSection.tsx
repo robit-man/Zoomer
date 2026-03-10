@@ -468,7 +468,7 @@ function FocusTile({
                   ? "bg-[var(--neon-pink)]"
                   : tone === "pink"
                     ? "bg-[var(--neon-blue)]"
-                    : "bg-[var(--signal)]",
+                    : "bg-[var(--graphite)]",
           )}
         />
       </div>

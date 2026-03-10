@@ -15,7 +15,7 @@ export default function Background({
   const { ready, config } = useTuning();
 
   const effectiveDebug: DebugSettings = {
-    showCables: true,
+    showCables: false,
     showWallStrips: true,
     bloomEnabled: config.post.bloom.enabled,
     bloomStrength: config.post.bloom.intensity,
@@ -27,20 +27,22 @@ export default function Background({
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       <Canvas
-        dpr={[1, 2]}
+        frameloop="demand"
+        dpr={[config.render.dprMin, config.render.dprMax]}
         gl={{
-          antialias: true,
+          antialias: config.render.antialias,
           alpha: true,
+          powerPreference: "high-performance",
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: effectiveDebug.exposure,
           outputColorSpace: THREE.SRGBColorSpace,
         }}
-        shadows={{ type: THREE.PCFSoftShadowMap }}
+        shadows={config.render.shadows ? { type: THREE.BasicShadowMap } : false}
         camera={{
           position: [0, 1.68, 10.8],
           fov: 52,
-          near: 0.1,
-          far: 100,
+          near: 0.18,
+          far: 42,
         }}
       >
         <LabScene debugSettings={effectiveDebug} progress={progress} />

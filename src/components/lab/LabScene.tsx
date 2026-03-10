@@ -33,7 +33,7 @@ function WalkthroughCamera({
 }: {
   progress?: MotionValue<number>;
 }) {
-  const { camera } = useThree();
+  const { camera, invalidate } = useThree();
   const lookTarget = useRef(new THREE.Vector3(0, 1.56, 7.4));
   const pointerTarget = useRef(new THREE.Vector2(0, 0));
   const pointerCurrent = useRef(new THREE.Vector2(0, 0));
@@ -86,10 +86,12 @@ function WalkthroughCamera({
       const normalizedX = (event.clientX / window.innerWidth - 0.5) * 2;
       const normalizedY = (event.clientY / window.innerHeight - 0.5) * 2;
       pointerTarget.current.set(normalizedX, normalizedY);
+      invalidate();
     };
 
     const handlePointerLeave = () => {
       pointerTarget.current.set(0, 0);
+      invalidate();
     };
 
     window.addEventListener("pointermove", handlePointerMove);
@@ -101,9 +103,23 @@ function WalkthroughCamera({
       root.removeEventListener("mouseleave", handlePointerLeave);
       window.removeEventListener("blur", handlePointerLeave);
     };
-  }, []);
+  }, [invalidate]);
 
-  useFrame(({ clock }, delta) => {
+  useEffect(() => {
+    if (!progress) {
+      return;
+    }
+
+    const unsubscribe = progress.on("change", () => {
+      invalidate();
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [invalidate, progress]);
+
+  useFrame((_, delta) => {
     const progressValue = THREE.MathUtils.clamp(progress?.get() ?? 0, 0, 1);
     const desiredPosition = desiredPositionRef.current;
     const desiredTarget = desiredTargetRef.current;
@@ -112,26 +128,30 @@ function WalkthroughCamera({
     positionCurve.getPointAt(progressValue, desiredPosition);
     targetCurve.getPointAt(progressValue, desiredTarget);
 
-    // Small stride/breath motion keeps the camera from feeling like a rail dolly.
-    const stride = Math.sin(clock.elapsedTime * 1.35 + progressValue * Math.PI * 5.5) * 0.028;
-    const sway = Math.cos(clock.elapsedTime * 0.82 + progressValue * Math.PI * 2.8) * 0.045;
-    const pointerLerp = 1 - Math.exp(-delta * 3.2);
+    const pointerLerp = 1 - Math.exp(-delta * 5.4);
     currentPointer.lerp(pointerTarget.current, pointerLerp);
 
-    const pointerShiftX = currentPointer.x * 0.18;
-    const pointerShiftY = currentPointer.y * 0.08;
+    const pointerShiftX = currentPointer.x * 0.12;
+    const pointerShiftY = currentPointer.y * 0.05;
 
-    desiredPosition.y += stride;
-    desiredPosition.x += sway + pointerShiftX;
+    desiredPosition.x += pointerShiftX;
     desiredPosition.y -= pointerShiftY;
-    desiredTarget.x += sway * 0.36 + pointerShiftX * 1.45;
-    desiredTarget.y += stride * 0.2 - pointerShiftY * 0.65;
+    desiredTarget.x += pointerShiftX * 1.18;
+    desiredTarget.y -= pointerShiftY * 0.55;
 
-    const positionLerp = 1 - Math.exp(-delta * 2.8);
-    const targetLerp = 1 - Math.exp(-delta * 3.6);
+    const positionLerp = 1 - Math.exp(-delta * 6.4);
+    const targetLerp = 1 - Math.exp(-delta * 7.1);
     camera.position.lerp(desiredPosition, positionLerp);
     lookTarget.current.lerp(desiredTarget, targetLerp);
     camera.lookAt(lookTarget.current);
+
+    if (
+      camera.position.distanceToSquared(desiredPosition) > 0.00001 ||
+      lookTarget.current.distanceToSquared(desiredTarget) > 0.00001 ||
+      currentPointer.distanceToSquared(pointerTarget.current) > 0.000001
+    ) {
+      invalidate();
+    }
   });
 
   return null;
@@ -156,16 +176,18 @@ export default function LabScene({ debugSettings, progress }: LabSceneProps) {
           <Furniture />
         </Suspense>
 
-        <Suspense fallback={null}>
-          <CableLayer visible={showCables} />
-        </Suspense>
+        {showCables && (
+          <Suspense fallback={null}>
+            <CableLayer visible />
+          </Suspense>
+        )}
 
         <group name="probes" />
         <group name="debug" />
       </group>
 
       {bloomEnabled && (
-        <EffectComposer>
+        <EffectComposer multisampling={0} enableNormalPass={false}>
           <Bloom
             intensity={bloomStrength}
             luminanceThreshold={LAB.post.bloom.luminanceThreshold}

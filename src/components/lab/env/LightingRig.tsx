@@ -32,6 +32,15 @@ export default function LightingRig() {
 
   return (
     <group name="fixtures">
+      <ambientLight intensity={cfg.ambient} color={0xffffff} />
+      {cfg.hemisphere.intensity > 0 && (
+        <hemisphereLight
+          intensity={cfg.hemisphere.intensity}
+          color={cfg.hemisphere.skyColor}
+          groundColor={cfg.hemisphere.groundColor}
+        />
+      )}
+
       <group name="overheadPanels">
         {cfg.overhead.zPositions.map((z, i) => (
           <group key={`panel-${i}`} position={[0, cfg.overhead.y, z]}>

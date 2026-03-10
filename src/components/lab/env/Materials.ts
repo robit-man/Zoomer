@@ -101,13 +101,13 @@ export function createTrimMaterial(): THREE.MeshStandardMaterial {
   });
 }
 
-export function createStripMaterial(phase: number, color = LAB.wallStrips.color): THREE.MeshStandardMaterial {
-  return new THREE.MeshStandardMaterial({
-    color: 0x222222,
-    emissive: color,
-    emissiveIntensity: LAB.wallStrips.emissiveBase,
+export function createStripMaterial(phase: number, color = LAB.wallStrips.color): THREE.MeshBasicMaterial {
+  const baseColor = new THREE.Color(color);
+  return new THREE.MeshBasicMaterial({
+    color: baseColor.clone().multiplyScalar(LAB.wallStrips.emissiveBase),
     side: THREE.DoubleSide,
-    userData: { phase },
+    toneMapped: false,
+    userData: { phase, baseColor },
   });
 }
 

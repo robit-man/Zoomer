@@ -25,6 +25,13 @@ function deepMerge<T extends Record<string, unknown>>(base: T, patch: Record<str
 export type LabConfig = typeof DEFAULTS;
 
 const DEFAULTS = {
+  render: {
+    dprMin: 1,
+    dprMax: 1,
+    shadows: false,
+    antialias: false,
+  },
+
   room: {
     length: 24,
     width: 8,
@@ -49,7 +56,12 @@ const DEFAULTS = {
 
   lighting: {
     exposure: 0.28,
-    ambient: 0,
+    ambient: 0.18,
+    hemisphere: {
+      intensity: 0,
+      skyColor: 0xf8fbff,
+      groundColor: 0x2d2b29,
+    },
     overhead: {
       count: 6,
       width: 1.2,
@@ -72,27 +84,36 @@ const DEFAULTS = {
   },
 
   wallStrips: {
-    color: 0xf5f8ff,
+    color: 0xffffff,
     eastAccentIndex: 3,
     eastAccentColor: 0x4cc9ff,
     westAccentIndex: 8,
     westAccentColor: 0xff58cf,
     countPerWall: 12,
-    width: 0.085,
+    width: 0.065,
     height: 2.7,
     offsetFromWall: 0.015,
-    pocketDepth: 0.085,
-    pocketWidth: 0.24,
-    slotInset: 0.045,
+    pocketDepth: 0.016,
+    pocketWidth: 0.08,
+    slotInset: 0.01,
     lightInset: 0.06,
-    slotLightIntensity: 2.95,
-    slotLightDistance: 8.4,
-    slotLightAngle: 0.52,
+    slotLightIntensity: 1.1,
+    slotLightDistance: 10.5,
+    slotLightAngle: 0.68,
     shadowEvery: 3,
     marginFromFloor: 0.42,
-    emissiveBase: 1.16,
-    emissiveAmplitude: 0.14,
+    emissiveBase: 2.65,
+    emissiveAmplitude: 0,
     flickerSpeed: 0.54,
+    fillLightOffset: 0.62,
+    fillLightHeightOffset: 0.16,
+    glowDepth: 0.22,
+    glowWidth: 0.5,
+    glowHeight: 3.25,
+    glowOpacity: 0.38,
+    floorGlowDepth: 1.48,
+    floorGlowWidth: 0.78,
+    floorGlowOpacity: 0,
     bleedLight: {
       intensity: 4.8,
       color: 0xf5f8ff,
@@ -145,9 +166,9 @@ const DEFAULTS = {
   post: {
     bloom: {
       enabled: true,
-      intensity: 0.46,
-      luminanceThreshold: 0.5,
-      luminanceSmoothing: 0.82,
+      intensity: 0.44,
+      luminanceThreshold: 0.34,
+      luminanceSmoothing: 0.84,
     },
   },
 

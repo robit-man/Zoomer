@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useLoader } from "@react-three/fiber";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
@@ -22,63 +22,156 @@ function buildAssetMetrics(source: THREE.Object3D) {
   };
 }
 
-function AssetInstance({
+function sanitizeMaterial(material: THREE.Material) {
+  const next = material.clone();
+
+  if ("envMapIntensity" in next) {
+    next.envMapIntensity = 0;
+  }
+
+  if ("reflectivity" in next) {
+    next.reflectivity = 0;
+  }
+
+  if ("shininess" in next) {
+    next.shininess = 10;
+  }
+
+  if ("specular" in next && next.specular instanceof THREE.Color) {
+    next.specular.setRGB(0.09, 0.1, 0.11);
+  }
+
+  next.needsUpdate = true;
+  return next;
+}
+
+function buildAssetTemplates({
   source,
   center,
   minY,
-  position,
-  rotation,
+}: {
+  source: THREE.Object3D;
+  center: THREE.Vector3;
+  minY: number;
+}) {
+  source.updateMatrixWorld(true);
+  const rootOffset = new THREE.Matrix4().makeTranslation(-center.x, -minY, -center.z);
+  const templates: Array<{
+    geometry: THREE.BufferGeometry;
+    material: THREE.Material | THREE.Material[];
+    matrix: THREE.Matrix4;
+  }> = [];
+
+  source.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) {
+      return;
+    }
+
+    const material = Array.isArray(child.material)
+      ? child.material.map((entry) => sanitizeMaterial(entry))
+      : sanitizeMaterial(child.material);
+
+    templates.push({
+      geometry: child.geometry,
+      material,
+      matrix: rootOffset.clone().multiply(child.matrixWorld.clone()),
+    });
+  });
+
+  return templates;
+}
+
+type Placement = {
+  position: [number, number, number];
+  rotation: [number, number, number];
+};
+
+type InstancedMeshRef = THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]> | null;
+
+function randomRange(seed: number, min: number, max: number) {
+  const value = Math.sin(seed * 127.1 + 311.7) * 43758.5453123;
+  const normalized = value - Math.floor(value);
+  return min + normalized * (max - min);
+}
+
+function InstancedAssetCluster({
+  source,
+  center,
+  minY,
+  placements,
   scale,
 }: {
   source: THREE.Object3D;
   center: THREE.Vector3;
   minY: number;
-  position: [number, number, number];
-  rotation: [number, number, number];
+  placements: Placement[];
   scale: number;
 }) {
-  const clone = useMemo(() => {
-    const next = source.clone(true);
-    next.traverse((child) => {
-      if (!(child instanceof THREE.Mesh)) {
+  const refs = useRef<InstancedMeshRef[]>([]);
+  const templates = useMemo(
+    () => buildAssetTemplates({ source, center, minY }),
+    [center, minY, source],
+  );
+
+  useLayoutEffect(() => {
+    const rootPosition = new THREE.Vector3();
+    const rootQuaternion = new THREE.Quaternion();
+    const rootScale = new THREE.Vector3(scale, scale, scale);
+    const rootMatrix = new THREE.Matrix4();
+    const finalMatrix = new THREE.Matrix4();
+
+    templates.forEach((template, templateIndex) => {
+      const mesh = refs.current[templateIndex];
+      if (!mesh) {
         return;
       }
 
-      child.castShadow = true;
-      child.receiveShadow = true;
+      placements.forEach((placement, placementIndex) => {
+        rootPosition.set(...placement.position);
+        rootQuaternion.setFromEuler(
+          new THREE.Euler(
+            placement.rotation[0],
+            placement.rotation[1],
+            placement.rotation[2],
+          ),
+        );
+        rootMatrix.compose(rootPosition, rootQuaternion, rootScale);
+        finalMatrix.multiplyMatrices(rootMatrix, template.matrix);
+        mesh.setMatrixAt(placementIndex, finalMatrix);
+      });
 
-      const materials = Array.isArray(child.material)
-        ? child.material.map((material) => material.clone())
-        : [child.material.clone()];
-      child.material = Array.isArray(child.material) ? materials : materials[0];
-
-      for (const material of materials) {
-        if ("envMapIntensity" in material) {
-          material.envMapIntensity = 0;
-        }
-
-        if ("reflectivity" in material) {
-          material.reflectivity = 0;
-        }
-
-        if ("shininess" in material) {
-          material.shininess = 10;
-        }
-
-        if ("specular" in material && material.specular instanceof THREE.Color) {
-          material.specular.setRGB(0.09, 0.1, 0.11);
-        }
-
-        material.needsUpdate = true;
-      }
+      mesh.instanceMatrix.needsUpdate = true;
     });
-    return next;
-  }, [source]);
+  }, [placements, scale, templates]);
+
+  useEffect(
+    () => () => {
+      templates.forEach((template) => {
+        if (Array.isArray(template.material)) {
+          template.material.forEach((material) => material.dispose());
+        } else {
+          template.material.dispose();
+        }
+      });
+    },
+    [templates],
+  );
 
   return (
-    <group position={position} rotation={rotation} scale={scale}>
-      <primitive object={clone} position={[-center.x, -minY, -center.z]} />
-    </group>
+    <>
+      {templates.map((template, index) => (
+        <instancedMesh
+          key={index}
+          ref={(mesh) => {
+            refs.current[index] = mesh;
+          }}
+          args={[template.geometry, template.material, placements.length]}
+          castShadow
+          receiveShadow
+          frustumCulled={false}
+        />
+      ))}
+    </>
   );
 }
 
@@ -272,27 +365,39 @@ export default function Furniture() {
   const neckScale = 0.00114;
   const eggScale = 0.00172;
   const [northDeskZ, centerDeskZ, southDeskZ] = LAB.furniture.deskZPositions;
+  const headRandomSeed = useMemo(
+    () => Math.abs(westX * 173.4 + centerDeskZ * 37.1 + deskTopY * 211.8),
+    [centerDeskZ, deskTopY, westX],
+  );
 
-  const headPlacements = [
-    {
-      position: [westX - 0.1, deskTopY, centerDeskZ - 0.42] as [number, number, number],
-      rotation: [0.04, -0.52, 0.02] as [number, number, number],
-    },
-    {
-      position: [westX + 0.06, deskTopY, centerDeskZ - 0.08] as [number, number, number],
-      rotation: [-0.03, 0.58, -0.08] as [number, number, number],
-    },
-    {
-      position: [westX - 0.15, deskTopY, centerDeskZ + 0.24] as [number, number, number],
-      rotation: [0.08, -1.1, 0.12] as [number, number, number],
-    },
-    {
-      position: [westX + 0.12, deskTopY, centerDeskZ + 0.52] as [number, number, number],
-      rotation: [0.02, 0.92, -0.05] as [number, number, number],
-    },
-  ];
+  const headPlacements: Placement[] = useMemo(() => {
+    const basePositions: Array<[number, number, number]> = [
+      [westX - 0.1, deskTopY, centerDeskZ - 0.42],
+      [westX + 0.06, deskTopY, centerDeskZ - 0.08],
+      [westX - 0.15, deskTopY, centerDeskZ + 0.24],
+      [westX + 0.12, deskTopY, centerDeskZ + 0.52],
+    ];
 
-  const neckPlacements = [
+    return basePositions.map((position, index) => {
+      const sideways = index === 1 || index === 3;
+      return {
+        position,
+        rotation: sideways
+          ? [
+              randomRange(headRandomSeed + index * 2.1, Math.PI * 0.42, Math.PI * 0.62),
+              randomRange(headRandomSeed + index * 3.4, -Math.PI, Math.PI),
+              randomRange(headRandomSeed + index * 4.7, -0.92, 0.92),
+            ]
+          : [
+              randomRange(headRandomSeed + index * 1.6, -0.18, 0.24),
+              randomRange(headRandomSeed + index * 2.9, -Math.PI, Math.PI),
+              randomRange(headRandomSeed + index * 4.1, -0.24, 0.24),
+            ],
+      };
+    });
+  }, [centerDeskZ, deskTopY, headRandomSeed, westX]);
+
+  const neckPlacements: Placement[] = [
     {
       position: [eastX - 0.05, deskTopY, northDeskZ - 0.18] as [number, number, number],
       rotation: [0.02, -0.34, 0.01] as [number, number, number],
@@ -311,7 +416,7 @@ export default function Furniture() {
     },
   ];
 
-  const eggPlacements = [
+  const eggPlacements: Placement[] = [
     {
       position: [eastX + 0.09, deskTopY, northDeskZ + 0.42] as [number, number, number],
       rotation: [0.12, -0.3, 0.18] as [number, number, number],
@@ -345,41 +450,27 @@ export default function Furniture() {
         ))}
       </group>
       <group name="props">
-        {headPlacements.map((placement, index) => (
-          <AssetInstance
-            key={`head-${index}`}
-            source={headObj}
-            center={headMetrics.center}
-            minY={headMetrics.minY}
-            position={placement.position}
-            rotation={placement.rotation}
-            scale={headScale}
-          />
-        ))}
-
-        {neckPlacements.map((placement, index) => (
-          <AssetInstance
-            key={`neck-${index}`}
-            source={neckObj}
-            center={neckMetrics.center}
-            minY={neckMetrics.minY}
-            position={placement.position}
-            rotation={placement.rotation}
-            scale={neckScale}
-          />
-        ))}
-
-        {eggPlacements.map((placement, index) => (
-          <AssetInstance
-            key={`egg-${index}`}
-            source={eggObj}
-            center={eggMetrics.center}
-            minY={eggMetrics.minY}
-            position={placement.position}
-            rotation={placement.rotation}
-            scale={eggScale}
-          />
-        ))}
+        <InstancedAssetCluster
+          source={headObj}
+          center={headMetrics.center}
+          minY={headMetrics.minY}
+          placements={headPlacements}
+          scale={headScale}
+        />
+        <InstancedAssetCluster
+          source={neckObj}
+          center={neckMetrics.center}
+          minY={neckMetrics.minY}
+          placements={neckPlacements}
+          scale={neckScale}
+        />
+        <InstancedAssetCluster
+          source={eggObj}
+          center={eggMetrics.center}
+          minY={eggMetrics.minY}
+          placements={eggPlacements}
+          scale={eggScale}
+        />
       </group>
     </group>
   );

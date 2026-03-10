@@ -1,18 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { loadTuning, LAB, type LabConfig } from "./config";
+import { LAB, type LabConfig } from "./config";
 
 /**
- * Loads /scene-tuning.json on mount, merges into LAB, and triggers a re-render.
- * Returns true once tuning is loaded (or failed gracefully).
+ * The lab config is seeded synchronously from the tuning JSON so the scene
+ * does not mount with one lighting state and then flip to another.
  */
 export function useTuning(): { ready: boolean; config: LabConfig } {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    loadTuning().then(() => setReady(true));
-  }, []);
-
-  return { ready, config: LAB };
+  return { ready: true, config: LAB };
 }

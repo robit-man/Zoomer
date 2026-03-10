@@ -21,19 +21,10 @@ export default function LightingRig() {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = cfg.exposure;
     sceneObject.background = new THREE.Color(0xf1efe7);
-
-    // Bright neutral environment keeps the room white while letting the neon
-    // wall accents carry the saturated color in reflections.
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    pmrem.compileEquirectangularShader();
-    const envScene = new THREE.Scene();
-    envScene.background = new THREE.Color(0xf1efe7);
-    const envMap = pmrem.fromScene(envScene, 0).texture;
-    sceneObject.environment = envMap;
-    pmrem.dispose();
+    sceneObject.environment = null;
 
     return () => {
-      envMap.dispose();
+      sceneObject.environment = null;
     };
   }, [cfg.exposure]);
 

@@ -11,7 +11,7 @@
     "deskLeg": { "color": 11449532, "roughness": 0.4, "metalness": 0.44 }
   },
   "lighting": {
-    "exposure": 0.38,
+    "exposure": 0.28,
     "ambient": 0,
     "overhead": {
       "intensity": 0,
@@ -25,32 +25,36 @@
     }
   },
   "wallStrips": {
-    "color": 65471,
+    "color": 16120063,
+    "eastAccentIndex": 3,
+    "eastAccentColor": 5032447,
+    "westAccentIndex": 8,
+    "westAccentColor": 16734415,
     "width": 0.085,
     "height": 2.7,
     "pocketDepth": 0.085,
     "pocketWidth": 0.24,
     "slotInset": 0.045,
     "lightInset": 0.06,
-    "slotLightIntensity": 4.2,
-    "slotLightDistance": 10,
-    "slotLightAngle": 0.58,
-    "shadowEvery": 4,
+    "slotLightIntensity": 2.95,
+    "slotLightDistance": 8.4,
+    "slotLightAngle": 0.52,
+    "shadowEvery": 3,
     "marginFromFloor": 0.42,
-    "emissiveBase": 1.18,
-    "emissiveAmplitude": 0.16,
+    "emissiveBase": 1.16,
+    "emissiveAmplitude": 0.14,
     "flickerSpeed": 0.52,
     "bleedLight": {
       "intensity": 4.8,
-      "color": 65471
+      "color": 16120063
     }
   },
   "post": {
     "bloom": {
       "enabled": true,
-      "intensity": 0.7,
-      "luminanceThreshold": 0.44,
-      "luminanceSmoothing": 0.78
+      "intensity": 0.46,
+      "luminanceThreshold": 0.5,
+      "luminanceSmoothing": 0.82
     }
   }
 }

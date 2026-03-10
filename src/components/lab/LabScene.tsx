@@ -152,7 +152,9 @@ export default function LabScene({ debugSettings, progress }: LabSceneProps) {
         <LightingRig />
         {showStrips && <WallStrips />}
         <Structure />
-        <Furniture />
+        <Suspense fallback={null}>
+          <Furniture />
+        </Suspense>
 
         <Suspense fallback={null}>
           <CableLayer visible={showCables} />

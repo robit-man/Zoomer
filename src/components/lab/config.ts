@@ -1,5 +1,7 @@
 /** Centralized configuration for the Lab Environment scene. */
 
+import tuningPatch from "../../../public/scene-tuning.json";
+
 // ── Deep merge utility ──────────────────────────────────────────────────────
 function deepMerge<T extends Record<string, unknown>>(base: T, patch: Record<string, unknown>): T {
   const out = { ...base } as Record<string, unknown>;
@@ -46,7 +48,7 @@ const DEFAULTS = {
   },
 
   lighting: {
-    exposure: 0.38,
+    exposure: 0.28,
     ambient: 0,
     overhead: {
       count: 6,
@@ -70,7 +72,11 @@ const DEFAULTS = {
   },
 
   wallStrips: {
-    color: 0x00ffbf,
+    color: 0xf5f8ff,
+    eastAccentIndex: 3,
+    eastAccentColor: 0x4cc9ff,
+    westAccentIndex: 8,
+    westAccentColor: 0xff58cf,
     countPerWall: 12,
     width: 0.085,
     height: 2.7,
@@ -79,17 +85,17 @@ const DEFAULTS = {
     pocketWidth: 0.24,
     slotInset: 0.045,
     lightInset: 0.06,
-    slotLightIntensity: 4.2,
-    slotLightDistance: 10,
-    slotLightAngle: 0.58,
-    shadowEvery: 4,
+    slotLightIntensity: 2.95,
+    slotLightDistance: 8.4,
+    slotLightAngle: 0.52,
+    shadowEvery: 3,
     marginFromFloor: 0.42,
-    emissiveBase: 1.18,
-    emissiveAmplitude: 0.16,
+    emissiveBase: 1.16,
+    emissiveAmplitude: 0.14,
     flickerSpeed: 0.54,
     bleedLight: {
       intensity: 4.8,
-      color: 0x00ffbf,
+      color: 0xf5f8ff,
     },
   },
 
@@ -139,9 +145,9 @@ const DEFAULTS = {
   post: {
     bloom: {
       enabled: true,
-      intensity: 0.7,
-      luminanceThreshold: 0.44,
-      luminanceSmoothing: 0.78,
+      intensity: 0.46,
+      luminanceThreshold: 0.5,
+      luminanceSmoothing: 0.82,
     },
   },
 
@@ -152,7 +158,7 @@ const DEFAULTS = {
 };
 
 // ── Mutable runtime config (starts as defaults, patched by JSON) ────────────
-export let LAB: LabConfig = { ...DEFAULTS };
+export let LAB: LabConfig = deepMerge(DEFAULTS, tuningPatch as Record<string, unknown>);
 
 /** Apply a partial patch from the tuning JSON */
 export function applyTuning(patch: Record<string, unknown>): void {

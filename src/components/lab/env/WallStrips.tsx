@@ -16,22 +16,33 @@ export default function WallStrips() {
   const stripCount = cfg.countPerWall;
   const spacing = LAB.room.length / (stripCount + 1);
   const yCenter = cfg.marginFromFloor + cfg.height / 2;
-  const stripColor = cfg.color;
   const pocketMat = useMemo(() => createRackMaterial(), []);
+  const eastColors = useMemo(
+    () => Array.from({ length: stripCount }, (_, index) => (
+      index === cfg.eastAccentIndex ? cfg.eastAccentColor : cfg.color
+    )),
+    [cfg.color, cfg.eastAccentColor, cfg.eastAccentIndex, stripCount],
+  );
+  const westColors = useMemo(
+    () => Array.from({ length: stripCount }, (_, index) => (
+      index === cfg.westAccentIndex ? cfg.westAccentColor : cfg.color
+    )),
+    [cfg.color, cfg.westAccentColor, cfg.westAccentIndex, stripCount],
+  );
 
   const stripMaterials = useMemo(() => {
     const mats: THREE.MeshStandardMaterial[] = [];
 
     for (let i = 0; i < stripCount; i += 1) {
-      mats.push(createStripMaterial(i * 1.37 + i * 0.73, stripColor));
+      mats.push(createStripMaterial(i * 1.37 + i * 0.73, eastColors[i]));
     }
 
     for (let i = 0; i < stripCount; i += 1) {
-      mats.push(createStripMaterial((stripCount + i) * 1.37 + i * 0.73, stripColor));
+      mats.push(createStripMaterial((stripCount + i) * 1.37 + i * 0.73, westColors[i]));
     }
 
     return mats;
-  }, [stripColor, stripCount]);
+  }, [eastColors, westColors, stripCount]);
 
   const materialsRef = useRef(stripMaterials);
 
@@ -86,7 +97,7 @@ export default function WallStrips() {
         key={`e-light-${i}`}
         position={[HALF_W - lightInset, yCenter, z]}
         target-position={[0.1, yCenter, z]}
-        color={stripColor}
+        color={eastColors[i]}
         intensity={cfg.slotLightIntensity}
         angle={cfg.slotLightAngle}
         penumbra={1}
@@ -127,13 +138,13 @@ export default function WallStrips() {
         key={`w-light-${i}`}
         position={[-HALF_W + lightInset, yCenter, z]}
         target-position={[-0.1, yCenter, z]}
-        color={stripColor}
+        color={westColors[i]}
         intensity={cfg.slotLightIntensity}
         angle={cfg.slotLightAngle}
         penumbra={1}
         distance={cfg.slotLightDistance}
         decay={2}
-        castShadow={i % shadowEvery === 0}
+        castShadow={(i + Math.ceil(shadowEvery / 2)) % shadowEvery === 0}
         shadow-mapSize-width={512}
         shadow-mapSize-height={512}
         shadow-bias={-0.00045}

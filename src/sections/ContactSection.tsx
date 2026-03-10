@@ -361,17 +361,12 @@ export default function ContactSection() {
             />
           ))}
 
-          <ToneBlock tone="lime" className="flex flex-col justify-between p-4 md:p-5">
-            <div className="label text-black/48">Availability</div>
-            <div>
-              <div className="display max-w-[10ch] text-[clamp(1.45rem,1.8vw,2rem)] leading-[0.92]">
-                New project intake open.
-              </div>
-              <p className="mt-4 max-w-[22rem] text-[10px] leading-[1.5] text-black/72 md:text-[11px]">
-                Best use cases: AI agents, app or website builds, AutoCAD packages,
-                electronics prototypes, 3D printed assemblies, and early-stage
-                feasibility or market work.
-              </p>
+          <ToneBlock tone="lime" className="flex h-full items-end justify-between gap-4 p-4 md:p-5">
+            <div className="display max-w-[10ch] text-[clamp(1.45rem,1.8vw,2rem)] leading-[0.92]">
+              New project intake open.
+            </div>
+            <div className="display shrink-0 leading-none text-black text-[clamp(2.4rem,5vw,5rem)]">
+              +
             </div>
           </ToneBlock>
         </div>

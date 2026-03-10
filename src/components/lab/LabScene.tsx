@@ -4,12 +4,13 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import type { MotionValue } from "framer-motion";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import RoomGeometry from "./env/RoomGeometry";
+import AstralBackdrop from "./env/AstralBackdrop";
 import LightingRig from "./env/LightingRig";
 import WallStrips from "./env/WallStrips";
 import Structure from "./env/Structure";
 import Furniture from "./env/Furniture";
+import GlowPass from "./fx/GlowPass";
 import PhysicsProvider from "./physics/PhysicsProvider";
 import CableSystem from "./physics/CableSystem";
 import { LAB } from "./config";
@@ -161,13 +162,14 @@ export default function LabScene({ debugSettings, progress }: LabSceneProps) {
   const showCables = debugSettings?.showCables ?? true;
   const showStrips = debugSettings?.showWallStrips ?? true;
   const bloomEnabled = debugSettings?.bloomEnabled ?? LAB.post.bloom.enabled;
-  const bloomStrength = debugSettings?.bloomStrength ?? LAB.post.bloom.intensity;
+  const bloomStrength = debugSettings?.bloomStrength ?? LAB.post.bloom.strength;
 
   return (
     <>
       <WalkthroughCamera progress={progress} />
 
       <group name="world">
+        <AstralBackdrop />
         <RoomGeometry />
         <LightingRig />
         {showStrips && <WallStrips />}
@@ -186,15 +188,13 @@ export default function LabScene({ debugSettings, progress }: LabSceneProps) {
         <group name="debug" />
       </group>
 
-      {bloomEnabled && (
-        <EffectComposer multisampling={0} enableNormalPass={false}>
-          <Bloom
-            intensity={bloomStrength}
-            luminanceThreshold={LAB.post.bloom.luminanceThreshold}
-            luminanceSmoothing={LAB.post.bloom.luminanceSmoothing}
-          />
-        </EffectComposer>
-      )}
+      <GlowPass
+        enabled={bloomEnabled}
+        strength={bloomStrength}
+        radius={LAB.post.bloom.radius}
+        threshold={LAB.post.bloom.threshold}
+        resolutionScale={LAB.post.bloom.resolutionScale}
+      />
     </>
   );
 }

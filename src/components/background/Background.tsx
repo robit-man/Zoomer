@@ -18,7 +18,7 @@ export default function Background({
     showCables: false,
     showWallStrips: true,
     bloomEnabled: config.post.bloom.enabled,
-    bloomStrength: config.post.bloom.intensity,
+    bloomStrength: config.post.bloom.strength,
     exposure: config.lighting.exposure,
   };
 

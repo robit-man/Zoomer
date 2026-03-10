@@ -18,8 +18,27 @@ type SectionKey = "home" | "offerings" | "contact";
 type SectionAxis = "x" | "y";
 type SectionMetricMap = Record<SectionKey, number>;
 type SectionAxisMap = Record<SectionKey, SectionAxis>;
+type SectionTransitionMap = Record<
+  SectionKey,
+  {
+    backward?: {
+      release: number;
+      commit: number;
+    };
+    forward?: {
+      release: number;
+      commit: number;
+    };
+  }
+>;
 
 const sectionOrder: SectionKey[] = ["home", "offerings", "contact"];
+const SNAP_RETURN_DELAY_MS = 1000;
+const HOME_ANCHOR = 0;
+const OFFERINGS_ANCHOR = 0.54;
+const CONTACT_ANCHOR = 1;
+const HOME_OFFERINGS_COMMIT = (HOME_ANCHOR + OFFERINGS_ANCHOR) / 2;
+const OFFERINGS_CONTACT_COMMIT = (OFFERINGS_ANCHOR + CONTACT_ANCHOR) / 2;
 
 const zeroMetrics: SectionMetricMap = {
   home: 0,
@@ -39,6 +58,31 @@ const sectionIndex: Record<SectionKey, number> = {
   contact: 2,
 };
 
+const sectionTransitions: SectionTransitionMap = {
+  home: {
+    forward: {
+      release: 0.08,
+      commit: HOME_OFFERINGS_COMMIT,
+    },
+  },
+  offerings: {
+    backward: {
+      release: 0.46,
+      commit: HOME_OFFERINGS_COMMIT,
+    },
+    forward: {
+      release: 0.6,
+      commit: OFFERINGS_CONTACT_COMMIT,
+    },
+  },
+  contact: {
+    backward: {
+      release: 0.9,
+      commit: OFFERINGS_CONTACT_COMMIT,
+    },
+  },
+};
+
 const sections: Record<
   SectionKey,
   {
@@ -53,34 +97,90 @@ const sections: Record<
     counter: "01",
     label: "Focus",
     path: "/",
-    timelinePosition: 0,
-    title: "Focus Matrix",
+    timelinePosition: HOME_ANCHOR,
+    title: "Capabilities",
   },
   offerings: {
     counter: "02",
-    label: "Tiles",
+    label: "Offerings",
     path: "/offerings",
-    timelinePosition: 0.54,
-    title: "Operating Lanes",
+    timelinePosition: OFFERINGS_ANCHOR,
+    title: "Offerings",
   },
   contact: {
     counter: "03",
     label: "Contact",
     path: "/contact",
-    timelinePosition: 1,
-    title: "Contact Window",
+    timelinePosition: CONTACT_ANCHOR,
+    title: "Project Intake",
   },
 };
+
+const transitionGuideMarks = [
+  {
+    id: "home-anchor",
+    value: sections.home.timelinePosition,
+    kind: "anchor" as const,
+  },
+  {
+    id: "home-offerings-release",
+    value: sectionTransitions.home.forward?.release,
+    kind: "release" as const,
+  },
+  {
+    id: "home-offerings-commit",
+    value: sectionTransitions.home.forward?.commit,
+    kind: "commit" as const,
+  },
+  {
+    id: "offerings-home-release",
+    value: sectionTransitions.offerings.backward?.release,
+    kind: "release" as const,
+  },
+  {
+    id: "offerings-anchor",
+    value: sections.offerings.timelinePosition,
+    kind: "anchor" as const,
+  },
+  {
+    id: "offerings-contact-release",
+    value: sectionTransitions.offerings.forward?.release,
+    kind: "release" as const,
+  },
+  {
+    id: "offerings-contact-commit",
+    value: sectionTransitions.offerings.forward?.commit,
+    kind: "commit" as const,
+  },
+  {
+    id: "contact-offerings-release",
+    value: sectionTransitions.contact.backward?.release,
+    kind: "release" as const,
+  },
+  {
+    id: "contact-anchor",
+    value: sections.contact.timelinePosition,
+    kind: "anchor" as const,
+  },
+].filter(
+  (
+    mark,
+  ): mark is {
+    id: string;
+    value: number;
+    kind: "anchor" | "release" | "commit";
+  } => typeof mark.value === "number",
+);
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
 }
 
 function sectionFromProgress(value: number): SectionKey {
-  if (value < 0.36) {
+  if (value < (sectionTransitions.home.forward?.commit ?? 1)) {
     return "home";
   }
-  if (value < 0.82) {
+  if (value < (sectionTransitions.offerings.forward?.commit ?? 1)) {
     return "offerings";
   }
   return "contact";
@@ -103,7 +203,13 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   const progress = useMotionValue(initialPosition);
   const [targetProgress, setTargetProgress] = useState(initialPosition);
   const [activeKey, setActiveKey] = useState<SectionKey>(initial);
+  const [railHeight, setRailHeight] = useState(0);
+  const [railTitleSlotHeight, setRailTitleSlotHeight] = useState(0);
   const activeRef = useRef<SectionKey>(initial);
+  const snappedKeyRef = useRef<SectionKey>(initial);
+  const settleTimerRef = useRef<number | null>(null);
+  const railRef = useRef<HTMLElement | null>(null);
+  const railTitleSlotRef = useRef<HTMLDivElement | null>(null);
 
   const [sectionOverflow, setSectionOverflow] =
     useState<SectionMetricMap>(zeroMetrics);
@@ -126,6 +232,24 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
     contact: null,
   });
 
+  const clearSettleTimer = useCallback(() => {
+    if (settleTimerRef.current == null) {
+      return;
+    }
+
+    window.clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = null;
+  }, []);
+
+  const scheduleReturnToSnapPoint = useCallback(() => {
+    clearSettleTimer();
+    settleTimerRef.current = window.setTimeout(() => {
+      const snappedKey = snappedKeyRef.current;
+      setTargetProgress(sections[snappedKey].timelinePosition);
+      settleTimerRef.current = null;
+    }, SNAP_RETURN_DELAY_MS);
+  }, [clearSettleTimer]);
+
   useEffect(() => {
     const controls = animate(progress, targetProgress, {
       type: "spring",
@@ -136,6 +260,53 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
 
     return () => controls.stop();
   }, [progress, targetProgress]);
+
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) {
+      return;
+    }
+
+    const measureRail = () => {
+      setRailHeight((current) => {
+        const next = rail.clientHeight;
+        return Math.abs(current - next) > 1 ? next : current;
+      });
+    };
+
+    const observer = new ResizeObserver(() => measureRail());
+    observer.observe(rail);
+    measureRail();
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const slot = railTitleSlotRef.current;
+    if (!slot) {
+      return;
+    }
+
+    const measureSlot = () => {
+      setRailTitleSlotHeight((current) => {
+        const next = slot.clientHeight;
+        return Math.abs(current - next) > 1 ? next : current;
+      });
+    };
+
+    const observer = new ResizeObserver(() => measureSlot());
+    observer.observe(slot);
+    measureSlot();
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(
+    () => () => {
+      clearSettleTimer();
+    },
+    [clearSettleTimer],
+  );
 
   useEffect(() => {
     overflowRef.current = sectionOverflow;
@@ -167,11 +338,16 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
         const contentWidth = content.scrollWidth;
         const widthOverflow = Math.max(0, contentWidth - viewportWidth);
         const heightOverflow = Math.max(0, contentHeight - viewportHeight);
+        const suppressVerticalOverflow = key === "home";
         const axis =
-          widthOverflow > 1 && widthOverflow > heightOverflow + 0.5 ? "x" : "y";
+          widthOverflow > 1 &&
+          (suppressVerticalOverflow || widthOverflow > heightOverflow + 0.5)
+            ? "x"
+            : "y";
 
         nextAxes[key] = axis;
-        nextOverflow[key] = axis === "x" ? widthOverflow : heightOverflow;
+        nextOverflow[key] =
+          axis === "x" ? widthOverflow : suppressVerticalOverflow ? 0 : heightOverflow;
       }
 
       if (metricsDiffer(overflowRef.current, nextOverflow)) {
@@ -235,7 +411,9 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
           return previous;
         }
 
-        const sectionKey = sectionFromProgress(previous);
+        clearSettleTimer();
+
+        const sectionKey = snappedKeyRef.current;
         const anchor = sections[sectionKey].timelinePosition;
         const maxOffset = overflowRef.current[sectionKey];
 
@@ -278,10 +456,41 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
           }
         }
 
-        return clamp01(previous + timelineDelta);
+        const proposed = clamp01(previous + timelineDelta);
+        const currentIndex = sectionIndex[sectionKey];
+        const nextKey = sectionOrder[currentIndex + 1];
+        const previousKey = sectionOrder[currentIndex - 1];
+        const transition =
+          direction > 0
+            ? sectionTransitions[sectionKey].forward
+            : sectionTransitions[sectionKey].backward;
+
+        if (
+          direction > 0 &&
+          transition &&
+          nextKey &&
+          proposed >= transition.commit
+        ) {
+          snappedKeyRef.current = nextKey;
+          return sections[nextKey].timelinePosition;
+        }
+
+        if (
+          direction < 0 &&
+          transition &&
+          previousKey &&
+          proposed <= transition.commit
+        ) {
+          snappedKeyRef.current = previousKey;
+          return sections[previousKey].timelinePosition;
+        }
+
+        scheduleReturnToSnapPoint();
+
+        return proposed;
       });
     },
-    [],
+    [clearSettleTimer, scheduleReturnToSnapPoint],
   );
 
   useEffect(() => {
@@ -359,6 +568,35 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   }, [applyDirectionalInput]);
 
   useMotionValueEvent(progress, "change", (value) => {
+    const snappedKey = snappedKeyRef.current;
+    let committedKey: SectionKey | null = null;
+
+    if (snappedKey === "home") {
+      const forward = sectionTransitions.home.forward;
+      if (forward && value >= forward.commit) {
+        committedKey = "offerings";
+      }
+    } else if (snappedKey === "offerings") {
+      const backward = sectionTransitions.offerings.backward;
+      const forward = sectionTransitions.offerings.forward;
+      if (backward && value <= backward.commit) {
+        committedKey = "home";
+      } else if (forward && value >= forward.commit) {
+        committedKey = "contact";
+      }
+    } else if (snappedKey === "contact") {
+      const backward = sectionTransitions.contact.backward;
+      if (backward && value <= backward.commit) {
+        committedKey = "offerings";
+      }
+    }
+
+    if (committedKey && committedKey !== snappedKey) {
+      clearSettleTimer();
+      snappedKeyRef.current = committedKey;
+      setTargetProgress(sections[committedKey].timelinePosition);
+    }
+
     const nextKey = sectionFromProgress(value);
     if (nextKey === activeRef.current) {
       return;
@@ -383,6 +621,8 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   });
 
   const goToSection = (key: SectionKey) => {
+    clearSettleTimer();
+    snappedKeyRef.current = key;
     activeRef.current = key;
     setActiveKey(key);
 
@@ -423,27 +663,81 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   const offeringsRotate = useTransform(progress, [0.62, 0.78, 0.86], [0, 1.5, -2]);
   const contactX = useTransform(progress, [0.74, 0.94], [-160, 0]);
   const contactOpacity = useTransform(progress, [0.74, 0.94], [0, 1]);
+  const railBackground = useTransform(
+    progress,
+    [
+      sections.home.timelinePosition,
+      sections.offerings.timelinePosition,
+      sections.contact.timelinePosition,
+    ],
+    ["#d7ff16", "#00ffbf", "#ff0060"],
+  );
+  const guideCursorTop = useTransform(progress, [0, 1], ["0%", "100%"]);
+  const railTitleSize =
+    railTitleSlotHeight > 0
+      ? Math.max(44, Math.min(128, railTitleSlotHeight * 0.24))
+      : railHeight > 0
+        ? Math.max(44, Math.min(128, railHeight * 0.14))
+        : 108;
 
   return (
     <main className="site-shell relative h-dvh w-full overflow-hidden">
       <Background progress={progress} />
       <div className="relative z-10 mx-auto grid h-full w-full max-w-[1680px] grid-rows-[auto_minmax(0,1fr)] overflow-hidden lg:grid-cols-[320px_minmax(0,1fr)] lg:grid-rows-1">
-        <aside className="relative flex min-h-[240px] flex-col overflow-hidden border-b border-black/15 bg-[var(--acid)] px-5 py-5 text-[var(--ink)] md:px-6 md:py-6 lg:h-full lg:border-b-0 lg:border-r lg:border-l">
+        <motion.aside
+          ref={railRef}
+          style={{ backgroundColor: railBackground }}
+          className="relative flex min-h-[240px] flex-col overflow-hidden border-b border-black/15 px-5 py-5 text-[var(--ink)] md:px-6 md:py-6 lg:h-full lg:border-b-0 lg:border-r lg:border-l"
+        >
           <div className="flex items-start justify-between gap-6">
             <div>
               <div className="label text-black/58">Zoomer consulting</div>
               <div className="mt-2 text-[10px] uppercase tracking-[0.22em] text-black/48">
-                plan / arch / make
+                software / hardtech / startup
               </div>
             </div>
           </div>
 
-          <div className="flex flex-1 flex-col justify-between gap-8 py-6 lg:py-10">
-            <div className="display text-[clamp(4.8rem,14vw,12rem)] m-auto tracking-[0.02em] lg:[writing-mode:vertical-rl] lg:rotate-180 lg:self-start">
-              ZOOMER
+          <div className="flex min-h-0 flex-1 flex-col gap-8 py-6 lg:py-10">
+            <div
+              ref={railTitleSlotRef}
+              className="flex min-h-0 flex-1 items-center justify-center overflow-hidden lg:justify-between"
+            >
+              <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden lg:justify-start">
+                <div
+                  style={{ fontSize: `${railTitleSize}px` }}
+                  className="display leading-[0.84] tracking-[0.02em] lg:[writing-mode:vertical-rl] lg:rotate-180 lg:self-start"
+                >
+                  ZOOMER
+                </div>
+              </div>
+
+              <div className="hidden h-full shrink-0 items-center pl-4 lg:flex">
+                <div className="relative flex h-[78%] w-8 items-center justify-center">
+                  <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-black/72" />
+
+                  {transitionGuideMarks.map((mark) => (
+                    <div
+                      key={mark.id}
+                      className={cn(
+                        "absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black",
+                        mark.kind === "anchor" && "h-3 w-4",
+                        mark.kind === "commit" && "h-2 w-5",
+                        mark.kind === "release" && "h-1 w-3 opacity-55",
+                      )}
+                      style={{ top: `${mark.value * 100}%` }}
+                    />
+                  ))}
+
+                  <motion.div
+                    style={{ top: guideCursorTop }}
+                    className="absolute left-1/2 h-4 w-6 -translate-x-1/2 -translate-y-1/2 border border-white/72 bg-black shadow-[0_0_0_1px_rgba(6,6,6,0.35)]"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="max-w-[18rem] space-y-5">
+            <div className="max-w-[18rem] shrink-0 space-y-5">
               <div className="grid gap-2.5">
                 {sectionOrder.map((key) => (
                   <button
@@ -454,20 +748,25 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
                     className={cn(
                       "control flex items-center justify-between border px-4 py-3 text-left transition-colors duration-200",
                       activeKey === key
-                        ? "border-black bg-black text-[var(--acid)]"
+                        ? "border-black bg-black text-white/42"
                         : "border-black/14 bg-black/5 text-black/66 hover:bg-black/9",
                     )}
                   >
                     <span className="label">{sections[key].counter}</span>
-                    <span className="display text-[1.45rem] leading-none">
+                    <motion.span
+                      style={
+                        activeKey === key ? { color: railBackground } : { color: "#060606" }
+                      }
+                      className="display text-[1.28rem] leading-none md:text-[1.34rem]"
+                    >
                       {sections[key].label}
-                    </span>
+                    </motion.span>
                   </button>
                 ))}
               </div>
             </div>
           </div>
-        </aside>
+        </motion.aside>
 
         <section className="relative min-h-0 overflow-hidden">
           <div className="absolute inset-0" />

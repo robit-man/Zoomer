@@ -26,14 +26,14 @@ type TileTone = "dark" | "light" | "lime" | "blue" | "pink";
 const contactLinks = [
   {
     icon: Mail,
-    label: "Email",
+    label: "Project email",
     value: "hello@zoomer.example",
     href: "mailto:hello@zoomer.example",
     tone: "dark" as TileTone,
   },
   {
     icon: Calendar,
-    label: "Schedule",
+    label: "Discovery call",
     value: "cal.com/zoomer",
     href: "https://cal.com",
     tone: "lime" as TileTone,
@@ -287,14 +287,14 @@ export default function ContactSection() {
           <div className="grid min-h-0 gap-8 px-4 py-5 md:px-5 md:py-6 xl:grid-cols-[minmax(0,1fr)_300px]">
             <div className="flex min-h-0 flex-col justify-between gap-8">
               <div>
-                <div className="label text-black/44">Open line</div>
-                <h2 className="display mt-4 max-w-[11ch] text-[clamp(3.4rem,6.2vw,6.2rem)] leading-[0.82] text-[var(--ink)]">
-                  Build with intent, then get it moving.
+                <div className="label text-black/44">Project intake</div>
+                <h2 className="display mt-4 max-w-[11ch] text-[clamp(2.7rem,4.9vw,4.9rem)] leading-[0.84] text-[var(--ink)]">
+                  Software, hardtech, and startup support in one lane.
                 </h2>
                 <p className="mt-5 max-w-[34rem] text-[11px] leading-[1.55] text-black/68 md:text-[12px]">
-                  The contact stage should feel like the same system, not a separate
-                  landing page. Keep the ask direct, keep the structure spare, and
-                  use a few strong routes instead of a crowded form.
+                  Reach out when the work spans AI agents, app development, custom
+                  websites, UI/UX, AutoCAD, electronics prototyping, 3D printed
+                  parts, or early-stage product and business strategy.
                 </p>
               </div>
 
@@ -314,35 +314,35 @@ export default function ContactSection() {
                   style={{ bottom: 30, left: -8 }}
                 />
 
-                <div className="label text-white/44">Working note</div>
+                <div className="label text-white/44">Best fit</div>
                 <p className="mt-4 max-w-[22rem] text-[10px] leading-[1.5] text-white/72 md:text-[11px]">
-                  Placeholder links are active here for now. Replace them with live
-                  destinations once scheduling, inbox routing, and outbound profiles
-                  are finalized.
+                  Strong fit for founders, operators, and small teams who need
+                  feasibility analysis, technical discovery, product definition, or
+                  build support before they scale scope or spend deeper.
                 </p>
               </ToneBlock>
             </div>
 
             <ToneBlock tone="pink" className="flex flex-col justify-between p-4 md:p-5">
               <div>
-                <div className="label text-black/48">Mode</div>
-                <div className="display mt-4 text-[clamp(2rem,2.8vw,3rem)] leading-[0.88]">
-                  Remote-first
+                <div className="label text-black/48">Engagement modes</div>
+                <div className="display mt-4 text-[clamp(1.7rem,2.2vw,2.35rem)] leading-[0.9]">
+                  Build + advisory
                 </div>
               </div>
 
               <div className="space-y-4 text-[10px] uppercase tracking-[0.18em] text-black/68 md:text-[11px]">
-                <div>Distributed collaboration</div>
-                <div>Response target: 1-2 business days</div>
-                <div>Best for build, planning, and launch-stage asks</div>
+                <div>Software delivery + product UI</div>
+                <div>Hardtech prototyping + fabrication</div>
+                <div>Startup consulting + market framing</div>
               </div>
             </ToneBlock>
           </div>
 
           <div className="border-t border-black/10 px-4 py-4 md:px-5">
             <div className="flex flex-wrap items-center justify-between gap-4 text-[10px] uppercase tracking-[0.18em] text-black/42 md:text-[11px]">
-              <span>Concept / structure / impact</span>
-              <span>Choose a route, start a conversation</span>
+              <span>Software / hardtech / startup consulting</span>
+              <span>Send scope, constraints, and timeline</span>
             </div>
           </div>
         </ToneBlock>
@@ -361,12 +361,13 @@ export default function ContactSection() {
           <ToneBlock tone="lime" className="flex flex-col justify-between p-4 md:p-5">
             <div className="label text-black/48">Availability</div>
             <div>
-              <div className="display max-w-[10ch] text-[clamp(1.7rem,2.2vw,2.4rem)] leading-[0.9]">
-                Project intake open.
+              <div className="display max-w-[10ch] text-[clamp(1.45rem,1.8vw,2rem)] leading-[0.92]">
+                New project intake open.
               </div>
               <p className="mt-4 max-w-[22rem] text-[10px] leading-[1.5] text-black/72 md:text-[11px]">
-                Placeholder block for a sharper CTA, current booking state, or a
-                project-fit note once the real outbound flow is settled.
+                Best use cases: AI agents, app or website builds, AutoCAD packages,
+                electronics prototypes, 3D printed assemblies, and early-stage
+                feasibility or market work.
               </p>
             </div>
           </ToneBlock>

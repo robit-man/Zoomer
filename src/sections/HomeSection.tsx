@@ -42,66 +42,66 @@ type LayoutMetrics = {
 const focusModules: FocusModule[] = [
   {
     id: "01",
-    title: "Embedded Systems",
-    tag: "Prototype bench",
+    title: "AI Agents",
+    tag: "Automation lane",
     detail:
-      "Placeholder module for embedded controls, firmware loops, and sensor-driven hardware proofs.",
+      "Task-specific AI agents, copilots, workflow automation, and operational assistants shaped around real internal or customer-facing processes.",
   },
   {
     id: "02",
-    title: "AutoCAD",
-    tag: "Spatial drafting",
+    title: "App Development",
+    tag: "Product build",
     detail:
-      "Placeholder module for measured drawings, component layouts, tolerances, and fabrication-ready plans.",
+      "Custom app development for internal tools, MVP products, and operational systems with the stack scoped to the actual business need.",
   },
   {
     id: "03",
-    title: "Web Design",
-    tag: "Interface stack",
+    title: "Custom Websites",
+    tag: "Web surface",
     detail:
-      "Placeholder module for web systems, motion direction, responsive structure, and brand-facing product surfaces.",
+      "Custom websites built for launch, conversion, positioning, and credibility without collapsing into generic brochureware.",
   },
   {
     id: "04",
-    title: "Consulting",
-    tag: "Advisory lane",
+    title: "UI/UX + Journeys",
+    tag: "Interface strategy",
     detail:
-      "Placeholder module for business framing, technical evaluation, offer design, and decision support.",
+      "Interface systems, user journeys, onboarding logic, and interaction direction that make products easier to understand and easier to use.",
   },
   {
     id: "05",
-    title: "Tech Discovery",
-    tag: "Research lane",
+    title: "Monetization",
+    tag: "Revenue model",
     detail:
-      "Placeholder module for feasibility mapping, capability review, and identifying practical next-build directions.",
+      "Offer design, pricing logic, conversion structure, and monetization planning connected to how the product actually earns.",
   },
   {
     id: "06",
-    title: "Business Development",
-    tag: "Growth lane",
+    title: "AutoCAD",
+    tag: "Technical drafting",
     detail:
-      "Placeholder module for partnerships, GTM structure, business packaging, and launch sequencing.",
+      "Measured drawings, mechanical layouts, tolerance-aware part planning, and fabrication-ready CAD support for physical product work.",
   },
   {
     id: "07",
-    title: "3D Fabrication",
-    tag: "Build lane",
+    title: "Electronics + Firmware",
+    tag: "Prototype bench",
     detail:
-      "Placeholder module for printed parts, short-run assembly, and physical prototype iteration.",
+      "Rapid prototyping of small electronics, firmware and hardware bring-up, and interface development for early-stage physical systems.",
   },
   {
     id: "08",
-    title: "Creative Direction",
-    tag: "Brand frame",
+    title: "3D Printing",
+    tag: "Fabrication cell",
     detail:
-      "Placeholder module for visual systems, campaign framing, and launch-ready storytelling.",
+      "Low-to-medium complexity parts manufacturing, print preparation, fit checking, and light assembly support for prototypes or short runs.",
   },
   {
     id: "09",
-    title: "Systems Integration",
-    tag: "Join layer",
+    title: "Business Consulting",
+    tag: "Startup advisory",
     detail:
-      "Placeholder module for connecting product, tooling, workflow, and commercial delivery into one stack.",
+      "Technology feasibility analysis, market research, pitch deck development, company structuring, and technology discovery for early-stage teams.",
   },
 ];
 
@@ -482,7 +482,7 @@ function FocusTile({
         >
           {tag}
         </div>
-        <h3 className="display max-w-[10ch] text-[clamp(1.35rem,2.05vw,2.6rem)] leading-[0.92]">
+        <h3 className="display max-w-[10ch] text-[clamp(1.18rem,1.72vw,2.18rem)] leading-[0.94]">
           {title}
         </h3>
         <p

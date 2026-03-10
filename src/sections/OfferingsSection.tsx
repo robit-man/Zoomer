@@ -19,93 +19,93 @@ type TileTone = "dark" | "light" | "lime" | "blue" | "pink";
 const offeringColumns = [
   {
     id: "01",
-    title: "Prototype Systems",
-    subtitle: "Embedded / CAD / Fabrication",
+    title: "Software",
+    subtitle: "AI / Apps / Web",
     summary:
-      "From controller logic to drafted parts and physical proofing, this lane turns technical intent into something testable fast.",
+      "AI agents, app builds, custom websites, UI/UX, user journeys, and monetization design for digital products that need to launch and earn.",
     tone: "light" as TileTone,
     tiles: [
       {
-        label: "Control Node",
-        title: "Microcontroller loops",
+        label: "Agent Systems",
+        title: "AI agents",
         detail:
-          "Firmware architecture, IO mapping, bench validation, and control-state behavior for early-stage hardware builds.",
+          "Workflow automation, internal copilots, domain-specific assistants, and task routing built around the decisions your team already makes.",
         tone: "dark" as TileTone,
       },
       {
-        label: "Draft Set",
-        title: "AutoCAD packages",
+        label: "Product Build",
+        title: "App development",
         detail:
-          "Measured drawings, fabrication notes, fit checks, and layout systems that hold up when the work leaves the screen.",
+          "Custom applications for internal ops, client-facing tools, and MVP software products with practical scope, architecture, and delivery.",
         tone: "lime" as TileTone,
       },
       {
-        label: "Build Cell",
-        title: "Prototype fabrication",
+        label: "Surface Stack",
+        title: "Web, UX, monetization",
         detail:
-          "Printed parts, short-run assemblies, and quick physical iterations to close the gap between concept and handled object.",
+          "Custom websites, UI/UX systems, user journeys, and monetization structure tied directly to conversion, clarity, and product fit.",
         tone: "blue" as TileTone,
       },
     ],
   },
   {
     id: "02",
-    title: "Digital Surfaces",
-    subtitle: "Web / Narrative / Interface",
+    title: "Hardtech + Fabrication",
+    subtitle: "CAD / Electronics / Print",
     summary:
-      "This lane is where the technical stack becomes legible: landing systems, UI structure, and motion that makes the work readable.",
+      "Physical product support from drafting through prototyping: AutoCAD, small-electronics bench work, firmware and hardware development, UI support, and printed part production.",
     tone: "dark" as TileTone,
     tiles: [
       {
-        label: "Launch Surface",
-        title: "Web experience systems",
+        label: "Draft Pack",
+        title: "AutoCAD systems",
         detail:
-          "Responsive marketing surfaces, editorial layout, and conversion-minded structure built to carry a point of view.",
+          "Measured drawings, assembly layouts, part geometry, tolerance-aware planning, and fabrication-ready drafting support for physical builds.",
         tone: "light" as TileTone,
       },
       {
-        label: "Motion Logic",
-        title: "Interaction direction",
+        label: "Prototype Bench",
+        title: "Electronics + firmware",
         detail:
-          "Transitions, hierarchy changes, pacing, and state changes that make complex offers feel controlled instead of crowded.",
+          "Rapid prototyping of small electronics, firmware and hardware iteration, bench validation, and embedded interface development.",
         tone: "pink" as TileTone,
       },
       {
-        label: "UI Kit",
-        title: "Reusable components",
+        label: "Build Output",
+        title: "3D printing + assembly",
         detail:
-          "Tokens, panel systems, and interaction rules that let the site evolve without collapsing into one-off design decisions.",
+          "Low-to-medium complexity parts manufacturing, print prep, fit checks, and assembly support to move concepts into handled objects.",
         tone: "dark" as TileTone,
       },
     ],
   },
   {
     id: "03",
-    title: "Strategy Frames",
-    subtitle: "Discovery / Offer / Growth",
+    title: "Business / Startup Consulting",
+    subtitle: "Feasibility / Market / Structure",
     summary:
-      "The third lane packages the work: feasibility framing, consulting structure, business development, and what happens after the build.",
+      "General consulting for founders and operators who need the product, business, and market case sharpened before committing bigger money.",
     tone: "light" as TileTone,
     tiles: [
       {
         label: "Discovery Pass",
-        title: "Technical feasibility",
+        title: "Feasibility + tech discovery",
         detail:
-          "Constraint mapping, capability review, and early decision support to identify what is viable before money is wasted.",
+          "Technology product feasibility analysis, constraint mapping, and technology discovery to determine what is actually buildable and worth pursuing.",
         tone: "dark" as TileTone,
       },
       {
-        label: "Offer Shape",
-        title: "Consulting packages",
+        label: "Company Model",
+        title: "Business structure",
         detail:
-          "Service framing, scope language, and pricing logic that makes an offer easy to understand and harder to ignore.",
+          "Business structure, company structuring, offer definition, and operating decisions that support the product and the market strategy.",
         tone: "light" as TileTone,
       },
       {
-        label: "Growth Track",
-        title: "Business development",
+        label: "Market Story",
+        title: "Pitch decks + research",
         detail:
-          "Partner mapping, launch sequencing, and commercial follow-through so the work has somewhere to go after delivery.",
+          "Market research, pitch deck development, and narrative framing that help explain the opportunity clearly to partners, clients, or investors.",
         tone: "lime" as TileTone,
       },
     ],
@@ -229,10 +229,10 @@ function ServiceTile({
   tile: (typeof offeringColumns)[number]["tiles"][number];
 }) {
   const seed = seededValue(`${tile.title}-${index}`);
-  const start = 0.38 + index * 0.025;
-  const end = 0.56 + index * 0.025;
+  const start = 0.18 + index * 0.08;
+  const end = 0.68 + index * 0.08;
   const opacity = useTransform(progress, [start, end], [0.12, 1]);
-  const x = useTransform(progress, [start, end], [-24 + index * 8, 0]);
+  const x = useTransform(progress, [start, end], [-20 + index * 6, 0]);
   const isDark = tile.tone === "dark";
   const accentAX = useTransform(driftX, (value) => value * (8 + seed * 8));
   const accentAY = useTransform(driftY, (value) => value * (10 + seed * 9));
@@ -264,7 +264,7 @@ function ServiceTile({
           {tile.label}
         </div>
         <div>
-          <h4 className="display max-w-[12ch] text-[clamp(1.3rem,1.7vw,2.1rem)] leading-[0.9]">
+          <h4 className="display max-w-[14ch] text-[clamp(1.12rem,1.42vw,1.78rem)] leading-[0.92]">
             {tile.title}
           </h4>
           <p
@@ -294,8 +294,8 @@ function LaneColumn({
   index: number;
   progress: MotionValue<number>;
 }) {
-  const start = 0.34 + index * 0.05;
-  const end = 0.5 + index * 0.05;
+  const start = 0.08 + index * 0.12;
+  const end = 0.62 + index * 0.12;
   const opacity = useTransform(progress, [start, end], [0.2, 1]);
   const x = useTransform(progress, [start, end], [-48 + index * 12, 0]);
   const seed = seededValue(`${column.title}-${column.id}`);
@@ -332,7 +332,7 @@ function LaneColumn({
               <div className={cn("label", isDark ? "text-white/44" : "text-black/44")}>
                 {column.id}
               </div>
-              <h3 className="display mt-3 max-w-[10ch] text-[clamp(1.8rem,2.4vw,3rem)] leading-[0.88]">
+              <h3 className="display mt-3 max-w-[10ch] text-[clamp(1.52rem,1.95vw,2.45rem)] leading-[0.9]">
                 {column.title}
               </h3>
             </div>
@@ -377,6 +377,7 @@ export default function OfferingsSection({
 }: {
   progress: MotionValue<number>;
 }) {
+  const entryProgress = useTransform(progress, [0.28, 0.54], [0, 1]);
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
   const driftX = useSpring(pointerX, { stiffness: 80, damping: 24, mass: 0.5 });
@@ -409,7 +410,7 @@ export default function OfferingsSection({
             driftX={driftX}
             driftY={driftY}
             index={index}
-            progress={progress}
+            progress={entryProgress}
           />
         ))}
       </div>

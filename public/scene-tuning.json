@@ -69,12 +69,23 @@
       "color": 16120063
     }
   },
+  "backdrop": {
+    "enabled": true,
+    "gridDistance": 5,
+    "lineLength": 0.12,
+    "lineColor": 15135999,
+    "lineOpacity": 0.18,
+    "atmosphereColor": 6731775,
+    "atmosphereScale": 34,
+    "atmosphereAlpha": 0.42
+  },
   "post": {
     "bloom": {
       "enabled": true,
-      "intensity": 0.44,
-      "luminanceThreshold": 0.34,
-      "luminanceSmoothing": 0.84
+      "strength": 0.82,
+      "radius": 0.35,
+      "threshold": 0.12,
+      "resolutionScale": 0.72
     }
   }
 }

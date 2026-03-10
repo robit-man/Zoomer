@@ -120,6 +120,17 @@ const DEFAULTS = {
     },
   },
 
+  backdrop: {
+    enabled: true,
+    gridDistance: 5,
+    lineLength: 0.12,
+    lineColor: 0xe7f4ff,
+    lineOpacity: 0.18,
+    atmosphereColor: 0x66b7ff,
+    atmosphereScale: 34,
+    atmosphereAlpha: 0.42,
+  },
+
   structure: {
     railOffsetX: 3.4,
     railSize: 0.05,
@@ -166,9 +177,10 @@ const DEFAULTS = {
   post: {
     bloom: {
       enabled: true,
-      intensity: 0.44,
-      luminanceThreshold: 0.34,
-      luminanceSmoothing: 0.84,
+      strength: 0.82,
+      radius: 0.35,
+      threshold: 0.12,
+      resolutionScale: 0.72,
     },
   },
 

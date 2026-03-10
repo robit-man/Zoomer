@@ -91,9 +91,9 @@ textarea {
     pointer-events: none;
     background-image:
       linear-gradient(rgba(6, 6, 6, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(6, 6, 6, 0.05) 1px, transparent 1px);
+      linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
     background-size: 46px 46px;
-    opacity: 0.36;
+    opacity: 1;
     z-index: 1;
   }
 

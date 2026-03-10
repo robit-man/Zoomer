@@ -425,7 +425,7 @@ function FocusTile({
     <motion.article
       style={{ x, y, opacity, filter }}
       className={cn(
-        "flag-indent-y relative flex h-full min-h-0 flex-col justify-between border border-black/12 p-4 md:p-5 lg:p-6",
+        "flag-indent-y relative flex h-full min-h-0 select-none flex-col justify-between border border-black/12 p-4 md:p-5 lg:p-6",
         tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
         tone === "lime" && "border-black/15 bg-[var(--acid)] text-[var(--ink)]",
         tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
@@ -473,21 +473,23 @@ function FocusTile({
         />
       </div>
 
-      <div>
-        <div
-          className={cn(
-            "label mb-3",
-            isDark ? "text-white/56" : "text-black/52",
-          )}
-        >
-          {tag}
+      <div className="flex min-h-0 flex-1 flex-col justify-between gap-3">
+        <div>
+          <div
+            className={cn(
+              "label mb-3",
+              isDark ? "text-white/56" : "text-black/52",
+            )}
+          >
+            {tag}
+          </div>
+          <h3 className="display max-w-[10ch] text-[clamp(1.18rem,1.72vw,2.18rem)] leading-[0.94]">
+            {title}
+          </h3>
         </div>
-        <h3 className="display max-w-[10ch] text-[clamp(1.18rem,1.72vw,2.18rem)] leading-[0.94]">
-          {title}
-        </h3>
         <p
           className={cn(
-            "mt-3 max-w-[26rem] text-[10px] leading-[1.45] md:text-[11px]",
+            "max-w-[26rem] text-[10px] leading-[1.45] md:text-[11px]",
             isDark ? "text-white/72" : "text-black/70",
           )}
         >

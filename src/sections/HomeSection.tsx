@@ -468,6 +468,7 @@ function FocusTile({
         height - 1,
         Math.max(1, accentRect.top - tileRect.top + accentRect.height / 2),
       );
+      const stemX = Math.max(1, startX - 2);
       const titleRight = Math.min(width - 2, Math.max(2, titleRect.right - tileRect.left));
       const titleLeft = Math.min(
         width - 2,
@@ -477,11 +478,18 @@ function FocusTile({
         height - 2,
         Math.max(startY + 2, titleRect.bottom - tileRect.top + 5),
       );
+      const bendSize = Math.max(
+        4,
+        Math.min(12, Math.floor((underlineY - startY) / 2), Math.floor((stemX - titleRight) / 2)),
+      );
+      const bendReach = bendSize + 3;
+      const bendJoinY = underlineY - bendReach;
+      const bendJoinX = stemX - bendReach;
 
       const nextD = [
-        `M ${startX.toFixed(2)} ${startY.toFixed(2)}`,
-        `L ${startX.toFixed(2)} ${underlineY.toFixed(2)}`,
-        `L ${titleRight.toFixed(2)} ${underlineY.toFixed(2)}`,
+        `M ${stemX.toFixed(2)} ${startY.toFixed(2)}`,
+        `L ${stemX.toFixed(2)} ${bendJoinY.toFixed(2)}`,
+        `L ${bendJoinX.toFixed(2)} ${underlineY.toFixed(2)}`,
         `L ${titleLeft.toFixed(2)} ${underlineY.toFixed(2)}`,
       ].join(" ");
 
@@ -605,10 +613,10 @@ function FocusTile({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col justify-between gap-3">
-        <div className="flex flex-col items-end text-right">
+        <div className="flex flex-col ">
           <div
             className={cn(
-              "label mb-3",
+              "label mb-3 text-left",
               isDark ? "text-white/56" : "text-black/52",
             )}
           >
@@ -616,7 +624,7 @@ function FocusTile({
           </div>
           <h3
             ref={titleRef}
-            className="display max-w-[10ch] text-right text-[clamp(1.18rem,1.72vw,2.18rem)] leading-[0.94]"
+            className="display max-w-[14ch] text-right text-[clamp(1.18rem,1.72vw,2rem)] leading-[0.94] pr-1"
           >
             {title}
           </h3>

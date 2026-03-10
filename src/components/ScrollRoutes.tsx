@@ -9,6 +9,7 @@ import {
 } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Background from "@/components/background/Background";
+import GridWaveOverlay from "@/components/background/GridWaveOverlay";
 import ContactSection from "@/sections/ContactSection";
 import HomeSection from "@/sections/HomeSection";
 import OfferingsSection from "@/sections/OfferingsSection";
@@ -600,6 +601,7 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   return (
     <main className="site-shell relative h-dvh w-full overflow-hidden">
       <Background progress={progress} />
+      <GridWaveOverlay progress={progress} />
       <div className="relative z-10 mx-auto grid h-full w-full max-w-[1680px] grid-rows-[auto_minmax(0,1fr)] overflow-hidden lg:grid-cols-[320px_minmax(0,1fr)] lg:grid-rows-1">
         <motion.aside
           ref={railRef}

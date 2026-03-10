@@ -23,6 +23,7 @@ const sectionOrder: SectionKey[] = ["home", "offerings", "contact"];
 const HOME_ANCHOR = 0;
 const OFFERINGS_ANCHOR = 0.54;
 const CONTACT_ANCHOR = 1;
+const SNAP_PROXIMITY = 0.06;
 
 const zeroMetrics: SectionMetricMap = {
   home: 0,
@@ -143,6 +144,45 @@ function sectionFromProgress(value: number): SectionKey {
     return "offerings";
   }
   return "contact";
+}
+
+function directionalSnapTarget(
+  sectionKey: SectionKey,
+  previous: number,
+  proposed: number,
+  direction: number,
+) {
+  const anchor = sections[sectionKey].timelinePosition;
+
+  // Snap into the current section's anchor only when moving toward it.
+  if (direction > 0 && previous < anchor && proposed >= anchor - SNAP_PROXIMITY) {
+    return anchor;
+  }
+  if (direction < 0 && previous > anchor && proposed <= anchor + SNAP_PROXIMITY) {
+    return anchor;
+  }
+
+  const currentIndex = sectionIndex[sectionKey];
+
+  if (direction > 0) {
+    const nextKey = sectionOrder[currentIndex + 1];
+    if (nextKey) {
+      const nextAnchor = sections[nextKey].timelinePosition;
+      if (proposed >= nextAnchor - SNAP_PROXIMITY) {
+        return nextAnchor;
+      }
+    }
+  } else if (direction < 0) {
+    const previousKey = sectionOrder[currentIndex - 1];
+    if (previousKey) {
+      const previousAnchor = sections[previousKey].timelinePosition;
+      if (proposed <= previousAnchor + SNAP_PROXIMITY) {
+        return previousAnchor;
+      }
+    }
+  }
+
+  return proposed;
 }
 
 function metricsDiffer(
@@ -386,7 +426,8 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
           }
         }
 
-        return clamp01(previous + timelineDelta);
+        const proposed = clamp01(previous + timelineDelta);
+        return directionalSnapTarget(sectionKey, previous, proposed, direction);
       });
     },
     [],

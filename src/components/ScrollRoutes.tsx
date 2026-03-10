@@ -33,7 +33,7 @@ type SectionTransitionMap = Record<
 >;
 
 const sectionOrder: SectionKey[] = ["home", "offerings", "contact"];
-const SNAP_RETURN_DELAY_MS = 1000;
+const SNAP_SETTLE_DELAY_MS = 260;
 const HOME_ANCHOR = 0;
 const OFFERINGS_ANCHOR = 0.54;
 const CONTACT_ANCHOR = 1;
@@ -186,6 +186,38 @@ function sectionFromProgress(value: number): SectionKey {
   return "contact";
 }
 
+function settleSectionFromRelease(
+  snappedKey: SectionKey,
+  value: number,
+): SectionKey {
+  if (snappedKey === "home") {
+    const forward = sectionTransitions.home.forward;
+    if (forward && value >= forward.release) {
+      return "offerings";
+    }
+    return "home";
+  }
+
+  if (snappedKey === "offerings") {
+    const backward = sectionTransitions.offerings.backward;
+    const forward = sectionTransitions.offerings.forward;
+
+    if (backward && value <= backward.release) {
+      return "home";
+    }
+    if (forward && value >= forward.release) {
+      return "contact";
+    }
+    return "offerings";
+  }
+
+  const backward = sectionTransitions.contact.backward;
+  if (backward && value <= backward.release) {
+    return "offerings";
+  }
+  return "contact";
+}
+
 function metricsDiffer(
   current: SectionMetricMap,
   next: SectionMetricMap,
@@ -241,13 +273,19 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
     settleTimerRef.current = null;
   }, []);
 
-  const scheduleReturnToSnapPoint = useCallback(() => {
+  const scheduleSettleToSection = useCallback(() => {
     clearSettleTimer();
     settleTimerRef.current = window.setTimeout(() => {
-      const snappedKey = snappedKeyRef.current;
-      setTargetProgress(sections[snappedKey].timelinePosition);
+      setTargetProgress((currentTarget) => {
+        const snappedKey = snappedKeyRef.current;
+        const settledKey = settleSectionFromRelease(snappedKey, currentTarget);
+        if (settledKey !== snappedKey) {
+          snappedKeyRef.current = settledKey;
+        }
+        return sections[settledKey].timelinePosition;
+      });
       settleTimerRef.current = null;
-    }, SNAP_RETURN_DELAY_MS);
+    }, SNAP_SETTLE_DELAY_MS);
   }, [clearSettleTimer]);
 
   useEffect(() => {
@@ -485,12 +523,12 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
           return sections[previousKey].timelinePosition;
         }
 
-        scheduleReturnToSnapPoint();
+        scheduleSettleToSection();
 
         return proposed;
       });
     },
-    [clearSettleTimer, scheduleReturnToSnapPoint],
+    [clearSettleTimer, scheduleSettleToSection],
   );
 
   useEffect(() => {

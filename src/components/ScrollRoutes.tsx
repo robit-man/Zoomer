@@ -638,17 +638,22 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
                       key={mark.id}
                       className={cn(
                         "absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black",
-                        mark.kind === "anchor" && "h-px w-10 opacity-95",
+                        mark.kind === "anchor" && "h-px opacity-95",
                         mark.kind === "commit" && "h-px w-7 opacity-80",
                         mark.kind === "release" && "h-px w-4 opacity-45",
                       )}
-                      style={{ top: `${mark.value * 100}%` }}
+                      style={{
+                        top: `${mark.value * 100}%`,
+                        ...(mark.kind === "anchor"
+                          ? { width: "9px", marginLeft: "0.5px" }
+                          : {}),
+                      }}
                     />
                   ))}
 
                   <motion.div
                     style={{ top: guideCursorTop }}
-                    className="absolute left-1/2 h-4 w-6 -translate-x-1/2 -translate-y-1/2 border border-white/72 bg-black shadow-[0_0_0_1px_rgba(6,6,6,0.35)]"
+                    className="absolute left-1/2 h-4 w-10 -translate-x-1/2 -translate-y-1/2 border-x border-black"
                   />
                 </div>
               </div>

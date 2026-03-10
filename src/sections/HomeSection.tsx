@@ -425,7 +425,7 @@ function FocusTile({
     <motion.article
       style={{ x, y, opacity, filter }}
       className={cn(
-        "relative flex h-full min-h-0 flex-col justify-between border border-black/12 p-4 md:p-5 lg:p-6",
+        "flag-indent-y relative flex h-full min-h-0 flex-col justify-between border border-black/12 p-4 md:p-5 lg:p-6",
         tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
         tone === "lime" && "border-black/15 bg-[var(--acid)] text-[var(--ink)]",
         tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",

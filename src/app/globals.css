@@ -59,6 +59,18 @@ textarea {
   color: var(--ink);
 }
 
+@property --flag-notch-x {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0rem;
+}
+
+@property --flag-notch-y {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0rem;
+}
+
 @layer components {
   .display {
     font-family: var(--font-display);
@@ -156,5 +168,55 @@ textarea {
     height: 1px;
     width: 100%;
     background: linear-gradient(90deg, rgba(6, 6, 6, 0.2), transparent);
+  }
+
+  .flag-indent-y {
+    --flag-notch-y: 0rem;
+    clip-path: polygon(
+      50% var(--flag-notch-y),
+      calc(50% + var(--flag-notch-y)) 0,
+      100% 0,
+      100% 100%,
+      calc(50% + var(--flag-notch-y)) 100%,
+      50% calc(100% - var(--flag-notch-y)),
+      calc(50% - var(--flag-notch-y)) 100%,
+      0 100%,
+      0 0,
+      calc(50% - var(--flag-notch-y)) 0
+    );
+    transition:
+      --flag-notch-y 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      clip-path 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: clip-path;
+  }
+
+  .flag-indent-y:hover,
+  .flag-indent-y:focus-within {
+    --flag-notch-y: 1rem;
+  }
+
+  .flag-indent-x {
+    --flag-notch-x: 0rem;
+    clip-path: polygon(
+      0 calc(50% - var(--flag-notch-x)),
+      var(--flag-notch-x) 50%,
+      0 calc(50% + var(--flag-notch-x)),
+      0 100%,
+      100% 100%,
+      100% calc(50% + var(--flag-notch-x)),
+      calc(100% - var(--flag-notch-x)) 50%,
+      100% calc(50% - var(--flag-notch-x)),
+      100% 0,
+      0 0
+    );
+    transition:
+      --flag-notch-x 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      clip-path 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: clip-path;
+  }
+
+  .flag-indent-x:hover,
+  .flag-indent-x:focus-within {
+    --flag-notch-x: 1rem;
   }
 }

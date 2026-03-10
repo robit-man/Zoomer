@@ -323,7 +323,10 @@ export default function ContactSection() {
               </ToneBlock>
             </div>
 
-            <ToneBlock tone="pink" className="flex flex-col justify-between p-4 md:p-5">
+            <ToneBlock
+              tone="pink"
+              className="flag-indent-x flex flex-col justify-between p-4 md:p-5"
+            >
               <div>
                 <div className="label text-black/48">Engagement modes</div>
                 <div className="display mt-4 text-[clamp(1.7rem,2.2vw,2.35rem)] leading-[0.9]">

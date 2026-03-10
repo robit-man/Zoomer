@@ -23,7 +23,25 @@ const sectionOrder: SectionKey[] = ["home", "offerings", "contact"];
 const HOME_ANCHOR = 0;
 const OFFERINGS_ANCHOR = 0.54;
 const CONTACT_ANCHOR = 1;
-const SNAP_PROXIMITY = 0.06;
+const HOME_OFFERINGS_MIDPOINT = (HOME_ANCHOR + OFFERINGS_ANCHOR) / 2;
+const OFFERINGS_CONTACT_MIDPOINT = (OFFERINGS_ANCHOR + CONTACT_ANCHOR) / 2;
+const SNAP_BREAK_OFFSET = 0.02;
+
+const snapBreakpoints: Record<
+  SectionKey,
+  { forward?: number; backward?: number }
+> = {
+  home: {
+    forward: HOME_OFFERINGS_MIDPOINT - SNAP_BREAK_OFFSET,
+  },
+  offerings: {
+    backward: HOME_OFFERINGS_MIDPOINT + SNAP_BREAK_OFFSET,
+    forward: OFFERINGS_CONTACT_MIDPOINT - SNAP_BREAK_OFFSET,
+  },
+  contact: {
+    backward: OFFERINGS_CONTACT_MIDPOINT + SNAP_BREAK_OFFSET,
+  },
+};
 
 const zeroMetrics: SectionMetricMap = {
   home: 0,
@@ -84,17 +102,17 @@ const transitionGuideMarks = [
   },
   {
     id: "home-offerings-release",
-    value: 0.08,
+    value: snapBreakpoints.home.forward,
     kind: "release" as const,
   },
   {
     id: "home-offerings-commit",
-    value: 0.27,
+    value: HOME_OFFERINGS_MIDPOINT,
     kind: "commit" as const,
   },
   {
     id: "offerings-home-release",
-    value: 0.46,
+    value: snapBreakpoints.offerings.backward,
     kind: "release" as const,
   },
   {
@@ -104,17 +122,17 @@ const transitionGuideMarks = [
   },
   {
     id: "offerings-contact-release",
-    value: 0.6,
+    value: snapBreakpoints.offerings.forward,
     kind: "release" as const,
   },
   {
     id: "offerings-contact-commit",
-    value: 0.77,
+    value: OFFERINGS_CONTACT_MIDPOINT,
     kind: "commit" as const,
   },
   {
     id: "contact-offerings-release",
-    value: 0.9,
+    value: snapBreakpoints.contact.backward,
     kind: "release" as const,
   },
   {
@@ -137,10 +155,10 @@ function clamp01(value: number) {
 }
 
 function sectionFromProgress(value: number): SectionKey {
-  if (value < 0.36) {
+  if (value < HOME_OFFERINGS_MIDPOINT) {
     return "home";
   }
-  if (value < 0.82) {
+  if (value < OFFERINGS_CONTACT_MIDPOINT) {
     return "offerings";
   }
   return "contact";
@@ -148,37 +166,27 @@ function sectionFromProgress(value: number): SectionKey {
 
 function directionalSnapTarget(
   sectionKey: SectionKey,
-  previous: number,
   proposed: number,
   direction: number,
 ) {
-  const anchor = sections[sectionKey].timelinePosition;
-
-  // Snap into the current section's anchor only when moving toward it.
-  if (direction > 0 && previous < anchor && proposed >= anchor - SNAP_PROXIMITY) {
-    return anchor;
-  }
-  if (direction < 0 && previous > anchor && proposed <= anchor + SNAP_PROXIMITY) {
-    return anchor;
-  }
-
   const currentIndex = sectionIndex[sectionKey];
+  const breakpoints = snapBreakpoints[sectionKey];
 
   if (direction > 0) {
+    const forwardBreakpoint = breakpoints.forward;
     const nextKey = sectionOrder[currentIndex + 1];
-    if (nextKey) {
-      const nextAnchor = sections[nextKey].timelinePosition;
-      if (proposed >= nextAnchor - SNAP_PROXIMITY) {
-        return nextAnchor;
-      }
+    if (nextKey && typeof forwardBreakpoint === "number" && proposed >= forwardBreakpoint) {
+      return sections[nextKey].timelinePosition;
     }
   } else if (direction < 0) {
+    const backwardBreakpoint = breakpoints.backward;
     const previousKey = sectionOrder[currentIndex - 1];
-    if (previousKey) {
-      const previousAnchor = sections[previousKey].timelinePosition;
-      if (proposed <= previousAnchor + SNAP_PROXIMITY) {
-        return previousAnchor;
-      }
+    if (
+      previousKey &&
+      typeof backwardBreakpoint === "number" &&
+      proposed <= backwardBreakpoint
+    ) {
+      return sections[previousKey].timelinePosition;
     }
   }
 
@@ -427,7 +435,7 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
         }
 
         const proposed = clamp01(previous + timelineDelta);
-        return directionalSnapTarget(sectionKey, previous, proposed, direction);
+        return directionalSnapTarget(sectionKey, proposed, direction);
       });
     },
     [],
@@ -630,9 +638,9 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
                       key={mark.id}
                       className={cn(
                         "absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black",
-                        mark.kind === "anchor" && "h-3 w-4",
-                        mark.kind === "commit" && "h-2 w-5",
-                        mark.kind === "release" && "h-1 w-3 opacity-55",
+                        mark.kind === "anchor" && "h-px w-10 opacity-95",
+                        mark.kind === "commit" && "h-px w-7 opacity-80",
+                        mark.kind === "release" && "h-px w-4 opacity-45",
                       )}
                       style={{ top: `${mark.value * 100}%` }}
                     />

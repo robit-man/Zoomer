@@ -410,6 +410,29 @@ function FocusTile({
   const accentAY = useTransform(parallaxY, (value) => value * (10 + driftSeed * 12));
   const accentBX = useTransform(parallaxX, (value) => value * (-12 - driftSeed * 8));
   const accentBY = useTransform(parallaxY, (value) => value * (-8 - driftSeed * 10));
+  const tileRef = useRef<HTMLElement | null>(null);
+  const accentBarRef = useRef<HTMLDivElement | null>(null);
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [underlinePath, setUnderlinePath] = useState<{
+    width: number;
+    height: number;
+    d: string;
+  }>({
+    width: 0,
+    height: 0,
+    d: "",
+  });
+  const accentStroke =
+    tone === "dark"
+      ? "var(--acid)"
+      : tone === "lime"
+        ? "#060606"
+        : tone === "blue"
+          ? "var(--neon-pink)"
+          : tone === "pink"
+            ? "var(--neon-blue)"
+            : "var(--graphite)";
 
   const opacity = useTransform(progress, [0, exitStart, exitMid, exitEnd], [1, 1, 0.45, 0]);
   const x = useTransform(progress, [0, exitStart, exitEnd], [0, 0, travel]);
@@ -421,9 +444,89 @@ function FocusTile({
   const blur = useTransform(progress, [0, exitStart, exitEnd], [0, 0, 12]);
   const filter = useTransform(blur, (value) => `blur(${value.toFixed(2)}px)`);
 
+  useEffect(() => {
+    const tile = tileRef.current;
+    const accentBar = accentBarRef.current;
+    const titleElement = titleRef.current;
+    if (!tile || !accentBar || !titleElement) {
+      return;
+    }
+
+    const measurePath = () => {
+      const tileRect = tile.getBoundingClientRect();
+      const accentRect = accentBar.getBoundingClientRect();
+      const titleRect = titleElement.getBoundingClientRect();
+      const width = tile.clientWidth;
+      const height = tile.clientHeight;
+
+      if (width <= 0 || height <= 0) {
+        return;
+      }
+
+      const startX = Math.min(width - 1, Math.max(1, accentRect.right - tileRect.left));
+      const startY = Math.min(
+        height - 1,
+        Math.max(1, accentRect.top - tileRect.top + accentRect.height / 2),
+      );
+      const titleRight = Math.min(width - 2, Math.max(2, titleRect.right - tileRect.left));
+      const titleLeft = Math.min(
+        width - 2,
+        Math.max(2, titleRect.left - tileRect.left),
+      );
+      const underlineY = Math.min(
+        height - 2,
+        Math.max(startY + 2, titleRect.bottom - tileRect.top + 5),
+      );
+
+      const nextD = [
+        `M ${startX.toFixed(2)} ${startY.toFixed(2)}`,
+        `L ${startX.toFixed(2)} ${underlineY.toFixed(2)}`,
+        `L ${titleRight.toFixed(2)} ${underlineY.toFixed(2)}`,
+        `L ${titleLeft.toFixed(2)} ${underlineY.toFixed(2)}`,
+      ].join(" ");
+
+      setUnderlinePath((current) => {
+        if (
+          current.d === nextD &&
+          Math.abs(current.width - width) < 0.5 &&
+          Math.abs(current.height - height) < 0.5
+        ) {
+          return current;
+        }
+        return {
+          width,
+          height,
+          d: nextD,
+        };
+      });
+    };
+
+    const observer = new ResizeObserver(() => measurePath());
+    observer.observe(tile);
+    observer.observe(accentBar);
+    observer.observe(titleElement);
+
+    measurePath();
+    window.addEventListener("resize", measurePath);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measurePath);
+    };
+  }, [title]);
+
   return (
     <motion.article
+      ref={tileRef}
       style={{ x, y, opacity, filter }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      onFocusCapture={() => setIsHovered(true)}
+      onBlurCapture={(event) => {
+        const nextTarget = event.relatedTarget as Node | null;
+        if (!event.currentTarget.contains(nextTarget)) {
+          setIsHovered(false);
+        }
+      }}
       className={cn(
         "flag-indent-y relative flex h-full min-h-0 select-none flex-col justify-between border border-black/12 p-4 md:p-5 lg:p-6",
         tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
@@ -448,6 +551,33 @@ function FocusTile({
         style={accentB}
       />
 
+      {underlinePath.d ? (
+        <svg
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-[4]"
+          width={underlinePath.width}
+          height={underlinePath.height}
+          viewBox={`0 0 ${underlinePath.width} ${underlinePath.height}`}
+        >
+          <motion.path
+            d={underlinePath.d}
+            fill="none"
+            stroke={accentStroke}
+            strokeWidth={1.5}
+            strokeLinecap="square"
+            initial={false}
+            animate={{
+              pathLength: isHovered ? 1 : 0,
+              opacity: isHovered ? 0.95 : 0,
+            }}
+            transition={{
+              duration: 0.42,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          />
+        </svg>
+      ) : null}
+
       <div className="flex items-start justify-between gap-4">
         <div
           className={cn(
@@ -458,6 +588,7 @@ function FocusTile({
           {id}
         </div>
         <div
+          ref={accentBarRef}
           className={cn(
             "h-[10px] w-[72px]",
             tone === "dark"
@@ -474,7 +605,7 @@ function FocusTile({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col justify-between gap-3">
-        <div>
+        <div className="flex flex-col items-end text-right">
           <div
             className={cn(
               "label mb-3",
@@ -483,7 +614,10 @@ function FocusTile({
           >
             {tag}
           </div>
-          <h3 className="display max-w-[10ch] text-[clamp(1.18rem,1.72vw,2.18rem)] leading-[0.94]">
+          <h3
+            ref={titleRef}
+            className="display max-w-[10ch] text-right text-[clamp(1.18rem,1.72vw,2.18rem)] leading-[0.94]"
+          >
             {title}
           </h3>
         </div>

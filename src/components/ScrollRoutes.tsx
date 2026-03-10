@@ -18,27 +18,11 @@ type SectionKey = "home" | "offerings" | "contact";
 type SectionAxis = "x" | "y";
 type SectionMetricMap = Record<SectionKey, number>;
 type SectionAxisMap = Record<SectionKey, SectionAxis>;
-type SectionTransitionMap = Record<
-  SectionKey,
-  {
-    backward?: {
-      release: number;
-      commit: number;
-    };
-    forward?: {
-      release: number;
-      commit: number;
-    };
-  }
->;
 
 const sectionOrder: SectionKey[] = ["home", "offerings", "contact"];
-const SNAP_SETTLE_DELAY_MS = 260;
 const HOME_ANCHOR = 0;
 const OFFERINGS_ANCHOR = 0.54;
 const CONTACT_ANCHOR = 1;
-const HOME_OFFERINGS_COMMIT = (HOME_ANCHOR + OFFERINGS_ANCHOR) / 2;
-const OFFERINGS_CONTACT_COMMIT = (OFFERINGS_ANCHOR + CONTACT_ANCHOR) / 2;
 
 const zeroMetrics: SectionMetricMap = {
   home: 0,
@@ -56,31 +40,6 @@ const sectionIndex: Record<SectionKey, number> = {
   home: 0,
   offerings: 1,
   contact: 2,
-};
-
-const sectionTransitions: SectionTransitionMap = {
-  home: {
-    forward: {
-      release: 0.08,
-      commit: HOME_OFFERINGS_COMMIT,
-    },
-  },
-  offerings: {
-    backward: {
-      release: 0.46,
-      commit: HOME_OFFERINGS_COMMIT,
-    },
-    forward: {
-      release: 0.6,
-      commit: OFFERINGS_CONTACT_COMMIT,
-    },
-  },
-  contact: {
-    backward: {
-      release: 0.9,
-      commit: OFFERINGS_CONTACT_COMMIT,
-    },
-  },
 };
 
 const sections: Record<
@@ -124,17 +83,17 @@ const transitionGuideMarks = [
   },
   {
     id: "home-offerings-release",
-    value: sectionTransitions.home.forward?.release,
+    value: 0.08,
     kind: "release" as const,
   },
   {
     id: "home-offerings-commit",
-    value: sectionTransitions.home.forward?.commit,
+    value: 0.27,
     kind: "commit" as const,
   },
   {
     id: "offerings-home-release",
-    value: sectionTransitions.offerings.backward?.release,
+    value: 0.46,
     kind: "release" as const,
   },
   {
@@ -144,17 +103,17 @@ const transitionGuideMarks = [
   },
   {
     id: "offerings-contact-release",
-    value: sectionTransitions.offerings.forward?.release,
+    value: 0.6,
     kind: "release" as const,
   },
   {
     id: "offerings-contact-commit",
-    value: sectionTransitions.offerings.forward?.commit,
+    value: 0.77,
     kind: "commit" as const,
   },
   {
     id: "contact-offerings-release",
-    value: sectionTransitions.contact.backward?.release,
+    value: 0.9,
     kind: "release" as const,
   },
   {
@@ -177,42 +136,10 @@ function clamp01(value: number) {
 }
 
 function sectionFromProgress(value: number): SectionKey {
-  if (value < (sectionTransitions.home.forward?.commit ?? 1)) {
+  if (value < 0.36) {
     return "home";
   }
-  if (value < (sectionTransitions.offerings.forward?.commit ?? 1)) {
-    return "offerings";
-  }
-  return "contact";
-}
-
-function settleSectionFromRelease(
-  snappedKey: SectionKey,
-  value: number,
-): SectionKey {
-  if (snappedKey === "home") {
-    const forward = sectionTransitions.home.forward;
-    if (forward && value >= forward.release) {
-      return "offerings";
-    }
-    return "home";
-  }
-
-  if (snappedKey === "offerings") {
-    const backward = sectionTransitions.offerings.backward;
-    const forward = sectionTransitions.offerings.forward;
-
-    if (backward && value <= backward.release) {
-      return "home";
-    }
-    if (forward && value >= forward.release) {
-      return "contact";
-    }
-    return "offerings";
-  }
-
-  const backward = sectionTransitions.contact.backward;
-  if (backward && value <= backward.release) {
+  if (value < 0.82) {
     return "offerings";
   }
   return "contact";
@@ -238,8 +165,6 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   const [railHeight, setRailHeight] = useState(0);
   const [railTitleSlotHeight, setRailTitleSlotHeight] = useState(0);
   const activeRef = useRef<SectionKey>(initial);
-  const snappedKeyRef = useRef<SectionKey>(initial);
-  const settleTimerRef = useRef<number | null>(null);
   const railRef = useRef<HTMLElement | null>(null);
   const railTitleSlotRef = useRef<HTMLDivElement | null>(null);
 
@@ -263,30 +188,6 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
     offerings: null,
     contact: null,
   });
-
-  const clearSettleTimer = useCallback(() => {
-    if (settleTimerRef.current == null) {
-      return;
-    }
-
-    window.clearTimeout(settleTimerRef.current);
-    settleTimerRef.current = null;
-  }, []);
-
-  const scheduleSettleToSection = useCallback(() => {
-    clearSettleTimer();
-    settleTimerRef.current = window.setTimeout(() => {
-      setTargetProgress((currentTarget) => {
-        const snappedKey = snappedKeyRef.current;
-        const settledKey = settleSectionFromRelease(snappedKey, currentTarget);
-        if (settledKey !== snappedKey) {
-          snappedKeyRef.current = settledKey;
-        }
-        return sections[settledKey].timelinePosition;
-      });
-      settleTimerRef.current = null;
-    }, SNAP_SETTLE_DELAY_MS);
-  }, [clearSettleTimer]);
 
   useEffect(() => {
     const controls = animate(progress, targetProgress, {
@@ -338,13 +239,6 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
 
     return () => observer.disconnect();
   }, []);
-
-  useEffect(
-    () => () => {
-      clearSettleTimer();
-    },
-    [clearSettleTimer],
-  );
 
   useEffect(() => {
     overflowRef.current = sectionOverflow;
@@ -449,9 +343,7 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
           return previous;
         }
 
-        clearSettleTimer();
-
-        const sectionKey = snappedKeyRef.current;
+        const sectionKey = sectionFromProgress(previous);
         const anchor = sections[sectionKey].timelinePosition;
         const maxOffset = overflowRef.current[sectionKey];
 
@@ -494,41 +386,10 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
           }
         }
 
-        const proposed = clamp01(previous + timelineDelta);
-        const currentIndex = sectionIndex[sectionKey];
-        const nextKey = sectionOrder[currentIndex + 1];
-        const previousKey = sectionOrder[currentIndex - 1];
-        const transition =
-          direction > 0
-            ? sectionTransitions[sectionKey].forward
-            : sectionTransitions[sectionKey].backward;
-
-        if (
-          direction > 0 &&
-          transition &&
-          nextKey &&
-          proposed >= transition.commit
-        ) {
-          snappedKeyRef.current = nextKey;
-          return sections[nextKey].timelinePosition;
-        }
-
-        if (
-          direction < 0 &&
-          transition &&
-          previousKey &&
-          proposed <= transition.commit
-        ) {
-          snappedKeyRef.current = previousKey;
-          return sections[previousKey].timelinePosition;
-        }
-
-        scheduleSettleToSection();
-
-        return proposed;
+        return clamp01(previous + timelineDelta);
       });
     },
-    [clearSettleTimer, scheduleSettleToSection],
+    [],
   );
 
   useEffect(() => {
@@ -606,35 +467,6 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   }, [applyDirectionalInput]);
 
   useMotionValueEvent(progress, "change", (value) => {
-    const snappedKey = snappedKeyRef.current;
-    let committedKey: SectionKey | null = null;
-
-    if (snappedKey === "home") {
-      const forward = sectionTransitions.home.forward;
-      if (forward && value >= forward.commit) {
-        committedKey = "offerings";
-      }
-    } else if (snappedKey === "offerings") {
-      const backward = sectionTransitions.offerings.backward;
-      const forward = sectionTransitions.offerings.forward;
-      if (backward && value <= backward.commit) {
-        committedKey = "home";
-      } else if (forward && value >= forward.commit) {
-        committedKey = "contact";
-      }
-    } else if (snappedKey === "contact") {
-      const backward = sectionTransitions.contact.backward;
-      if (backward && value <= backward.commit) {
-        committedKey = "offerings";
-      }
-    }
-
-    if (committedKey && committedKey !== snappedKey) {
-      clearSettleTimer();
-      snappedKeyRef.current = committedKey;
-      setTargetProgress(sections[committedKey].timelinePosition);
-    }
-
     const nextKey = sectionFromProgress(value);
     if (nextKey === activeRef.current) {
       return;
@@ -659,8 +491,6 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
   });
 
   const goToSection = (key: SectionKey) => {
-    clearSettleTimer();
-    snappedKeyRef.current = key;
     activeRef.current = key;
     setActiveKey(key);
 

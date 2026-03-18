@@ -320,15 +320,23 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
         const widthOverflow = Math.max(0, contentWidth - viewportWidth);
         const heightOverflow = Math.max(0, contentHeight - viewportHeight);
         const suppressVerticalOverflow = key === "home";
+        // Home exits via per-tile motion, so decorative overflow should not create
+        // an extra container-level horizontal slide before the transition starts.
+        const suppressHorizontalOverflow = key === "home";
+        const effectiveWidthOverflow = suppressHorizontalOverflow ? 0 : widthOverflow;
         const axis =
-          widthOverflow > 1 &&
-          (suppressVerticalOverflow || widthOverflow > heightOverflow + 0.5)
+          effectiveWidthOverflow > 1 &&
+          (suppressVerticalOverflow || effectiveWidthOverflow > heightOverflow + 0.5)
             ? "x"
             : "y";
 
         nextAxes[key] = axis;
         nextOverflow[key] =
-          axis === "x" ? widthOverflow : suppressVerticalOverflow ? 0 : heightOverflow;
+          axis === "x"
+            ? effectiveWidthOverflow
+            : suppressVerticalOverflow
+              ? 0
+              : heightOverflow;
       }
 
       if (metricsDiffer(overflowRef.current, nextOverflow)) {

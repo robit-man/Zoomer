@@ -10,7 +10,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { cn } from "@/components/ui/cn";
 
-const MIN_TILE_WIDTH = 320;
+const MIN_TILE_SIZE = 315;
 const GAP_ESTIMATE = 12;
 
 type FocusTone = "dark" | "light" | "lime" | "blue" | "pink";
@@ -175,9 +175,32 @@ function buildRandomizedModules(seed: number) {
   });
 }
 
-function computeFluidColumns(width: number): number {
-  if (width <= 0) return 3;
-  return Math.max(2, Math.min(6, Math.floor((width + GAP_ESTIMATE) / (MIN_TILE_WIDTH + GAP_ESTIMATE))));
+const TILE_COUNT = 12;
+
+function computeFluidColumns(width: number, height: number): number {
+  if (width <= 0 || height <= 0) return 3;
+
+  // Pick highest column count where square tiles >= MIN_TILE_SIZE
+  // while fitting both width and height.
+  for (let cols = 6; cols >= 2; cols -= 1) {
+    const rows = Math.ceil(TILE_COUNT / cols);
+    const tileW = (width - GAP_ESTIMATE * (cols - 1)) / cols;
+    const tileH = (height - GAP_ESTIMATE * (rows - 1)) / rows;
+    const tileSize = Math.min(tileW, tileH);
+    if (tileSize >= MIN_TILE_SIZE) {
+      return cols;
+    }
+  }
+
+  return 2;
+}
+
+function computeTileSize(width: number, height: number, columns: number): number {
+  if (width <= 0 || height <= 0) return 0;
+  const rows = Math.ceil(TILE_COUNT / columns);
+  const tileW = (width - GAP_ESTIMATE * (columns - 1)) / columns;
+  const tileH = (height - GAP_ESTIMATE * (rows - 1)) / rows;
+  return Math.floor(Math.min(tileW, tileH));
 }
 
 function buildExitMetadata(
@@ -445,7 +468,7 @@ function FocusTile({
         }
       }}
       className={cn(
-        "flag-indent-y relative flex aspect-square min-h-0 select-none flex-col justify-between overflow-hidden border border-black/12 p-4 md:p-5 lg:p-6",
+        "flag-indent-y relative flex min-h-0 select-none flex-col justify-between overflow-hidden border border-black/12 p-4 md:p-5 lg:p-6",
         tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
         tone === "lime" && "border-black/15 bg-[var(--acid)] text-[var(--ink)]",
         tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
@@ -553,7 +576,7 @@ function FocusTile({
 
 export default function HomeSection({ progress }: { progress: MotionValue<number> }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [seed] = useState(() => createSeed());
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
@@ -566,21 +589,33 @@ export default function HomeSection({ progress }: { progress: MotionValue<number
       return;
     }
 
-    const updateWidth = () => {
-      setContainerWidth((current) => {
-        const next = element.clientWidth;
-        return Math.abs(current - next) > 1 ? next : current;
+    const updateSize = () => {
+      setContainerSize((current) => {
+        const nextW = element.clientWidth;
+        const nextH = element.clientHeight;
+        if (Math.abs(current.width - nextW) < 2 && Math.abs(current.height - nextH) < 2) {
+          return current;
+        }
+        return { width: nextW, height: nextH };
       });
     };
 
-    const observer = new ResizeObserver(() => updateWidth());
+    const observer = new ResizeObserver(() => updateSize());
     observer.observe(element);
-    updateWidth();
+    updateSize();
 
     return () => observer.disconnect();
   }, []);
 
-  const columns = useMemo(() => computeFluidColumns(containerWidth), [containerWidth]);
+  const columns = useMemo(
+    () => computeFluidColumns(containerSize.width, containerSize.height),
+    [containerSize.width, containerSize.height],
+  );
+  const rows = Math.ceil(TILE_COUNT / columns);
+  const tileSize = useMemo(
+    () => computeTileSize(containerSize.width, containerSize.height, columns),
+    [containerSize.width, containerSize.height, columns],
+  );
 
   const modules = useMemo(() => buildRandomizedModules(seed), [seed]);
   const exitMetadata = useMemo(
@@ -604,14 +639,15 @@ export default function HomeSection({ progress }: { progress: MotionValue<number
   return (
     <div
       ref={rootRef}
-      className="relative flex h-full w-full items-center justify-center overflow-visible px-3 md:px-5 lg:px-8"
+      className="relative flex h-full w-full items-center justify-center overflow-visible"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
       <div
-        className="grid w-full max-w-[86rem] gap-2 bg-transparent transition-[grid-template-columns] duration-300 ease-out md:gap-3"
+        className="grid gap-2 bg-transparent transition-[grid-template-columns,grid-template-rows] duration-300 ease-out md:gap-3"
         style={{
-          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+          gridTemplateColumns: tileSize > 0 ? `repeat(${columns}, ${tileSize}px)` : `repeat(${columns}, minmax(0, 1fr))`,
+          gridTemplateRows: tileSize > 0 ? `repeat(${rows}, ${tileSize}px)` : undefined,
         }}
       >
         {modules.map((module) => (

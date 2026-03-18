@@ -706,7 +706,7 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
           <motion.section
             style={{ opacity: homeOpacity }}
             className={cn(
-              "section-layer absolute inset-0 px-0 pb-0 pt-0",
+              "section-layer absolute inset-0 px-4 pb-4 pt-4 md:px-6 md:pb-6 md:pt-6 lg:px-6 lg:pb-6 lg:pt-6",
               activeKey === "home" ? "pointer-events-auto" : "pointer-events-none",
             )}
           >

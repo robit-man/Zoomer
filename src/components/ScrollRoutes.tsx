@@ -319,14 +319,13 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
         const contentWidth = content.scrollWidth;
         const widthOverflow = Math.max(0, contentWidth - viewportWidth);
         const heightOverflow = Math.max(0, contentHeight - viewportHeight);
-        const suppressVerticalOverflow = key === "home";
         // Home exits via per-tile motion, so decorative overflow should not create
         // an extra container-level horizontal slide before the transition starts.
         const suppressHorizontalOverflow = key === "home";
         const effectiveWidthOverflow = suppressHorizontalOverflow ? 0 : widthOverflow;
         const axis =
           effectiveWidthOverflow > 1 &&
-          (suppressVerticalOverflow || effectiveWidthOverflow > heightOverflow + 0.5)
+          effectiveWidthOverflow > heightOverflow + 0.5
             ? "x"
             : "y";
 
@@ -334,9 +333,7 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
         nextOverflow[key] =
           axis === "x"
             ? effectiveWidthOverflow
-            : suppressVerticalOverflow
-              ? 0
-              : heightOverflow;
+            : heightOverflow;
       }
 
       if (metricsDiffer(overflowRef.current, nextOverflow)) {
@@ -599,8 +596,11 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
     ["#d7ff16", "#00ffbf", "#ff0060"],
   );
   const guideCursorTop = useTransform(progress, [0, 1], ["0%", "100%"]);
-  const railTitleSize =
-    railTitleSlotHeight > 0
+  const isCompactRail = railHeight > 0 && railHeight < 600;
+  const isUltraCompactRail = railHeight > 0 && railHeight < 400;
+  const railTitleSize = isCompactRail
+    ? Math.max(48, Math.min(64, (railHeight - 200) * 0.16))
+    : railTitleSlotHeight > 0
       ? Math.max(44, Math.min(128, railTitleSlotHeight * 0.24))
       : railHeight > 0
         ? Math.max(44, Math.min(128, railHeight * 0.14))
@@ -616,57 +616,108 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
           style={{ backgroundColor: railBackground }}
           className="relative flex min-h-[240px] flex-col overflow-hidden border-b border-black/15 px-5 py-5 text-[var(--ink)] md:px-6 md:py-6 lg:h-full lg:border-b-0 lg:border-r lg:border-l"
         >
-          <div className="flex items-start justify-between gap-6">
-            <div>
-              <div className="label text-black/58">Zoomer consulting</div>
-              <div className="mt-2 text-[10px] uppercase tracking-[0.22em] text-black/48">
-                software / hardtech / startup
+          {!isUltraCompactRail && (
+            <div className="flex items-start justify-between gap-6">
+              <div>
+                <div className="label text-black/58">Zoomer consulting</div>
+                <div className="mt-2 text-[10px] uppercase tracking-[0.22em] text-black/48">
+                  software / hardtech / startup
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          <div className="flex min-h-0 flex-1 flex-col gap-8 py-6 lg:py-10">
+          <div className={cn(
+            "flex min-h-0 flex-1 flex-col",
+            isCompactRail ? "gap-4 py-3 lg:py-4" : "gap-8 py-6 lg:py-10",
+          )}>
             <div
               ref={railTitleSlotRef}
-              className="flex min-h-0 flex-1 items-center justify-center overflow-hidden lg:justify-between"
+              className={cn(
+                "flex min-h-0 flex-1 overflow-hidden",
+                isCompactRail
+                  ? "flex-col items-start justify-center gap-2"
+                  : "items-center justify-center lg:justify-between",
+              )}
             >
-              <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden lg:justify-start">
+              <div
+                className={cn(
+                  "flex min-h-0 items-center overflow-hidden",
+                  isCompactRail
+                    ? "shrink-0"
+                    : "flex-1 justify-center lg:justify-start",
+                )}
+              >
                 <div
                   style={{ fontSize: `${railTitleSize}px` }}
-                  className="display leading-[0.84] tracking-[0.02em] lg:[writing-mode:vertical-rl] lg:rotate-180 lg:self-start"
+                  className={cn(
+                    "display leading-[0.84] tracking-[0.02em]",
+                    !isCompactRail && "lg:[writing-mode:vertical-rl] lg:rotate-180 lg:self-start",
+                  )}
                 >
                   ZOOMER
                 </div>
               </div>
 
-              <div className="hidden h-full shrink-0 items-center pl-4 lg:flex">
-                <div className="relative flex h-[78%] w-8 items-center justify-center">
-                  <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-black/72" />
+              {isCompactRail ? (
+                <div className="hidden w-full shrink-0 items-center lg:flex">
+                  <div className="relative flex h-6 w-[82%] items-center justify-center">
+                    <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-black/72" />
 
-                  {transitionGuideMarks.map((mark) => (
-                    <div
-                      key={mark.id}
-                      className={cn(
-                        "absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black",
-                        mark.kind === "anchor" && "h-px opacity-95",
-                        mark.kind === "commit" && "h-px w-7 opacity-80",
-                        mark.kind === "release" && "h-px w-4 opacity-45",
-                      )}
-                      style={{
-                        top: `${mark.value * 100}%`,
-                        ...(mark.kind === "anchor"
-                          ? { width: "9px", marginLeft: "0.5px" }
-                          : {}),
-                      }}
+                    {transitionGuideMarks.map((mark) => (
+                      <div
+                        key={mark.id}
+                        className={cn(
+                          "absolute top-1/2 -translate-x-1/2 -translate-y-1/2 bg-black",
+                          mark.kind === "anchor" && "w-px opacity-95",
+                          mark.kind === "commit" && "w-px h-5 opacity-80",
+                          mark.kind === "release" && "w-px h-3 opacity-45",
+                        )}
+                        style={{
+                          left: `${mark.value * 100}%`,
+                          ...(mark.kind === "anchor"
+                            ? { height: "9px", marginTop: "0.5px" }
+                            : {}),
+                        }}
+                      />
+                    ))}
+
+                    <motion.div
+                      style={{ left: guideCursorTop }}
+                      className="absolute top-1/2 h-8 w-3 -translate-x-1/2 -translate-y-1/2 border-y border-black"
                     />
-                  ))}
-
-                  <motion.div
-                    style={{ top: guideCursorTop }}
-                    className="absolute left-1/2 h-4 w-10 -translate-x-1/2 -translate-y-1/2 border-x border-black"
-                  />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="hidden h-full shrink-0 items-center pl-4 lg:flex">
+                  <div className="relative flex h-[78%] w-8 items-center justify-center">
+                    <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-black/72" />
+
+                    {transitionGuideMarks.map((mark) => (
+                      <div
+                        key={mark.id}
+                        className={cn(
+                          "absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black",
+                          mark.kind === "anchor" && "h-px opacity-95",
+                          mark.kind === "commit" && "h-px w-7 opacity-80",
+                          mark.kind === "release" && "h-px w-4 opacity-45",
+                        )}
+                        style={{
+                          top: `${mark.value * 100}%`,
+                          ...(mark.kind === "anchor"
+                            ? { width: "9px", marginLeft: "0.5px" }
+                            : {}),
+                        }}
+                      />
+                    ))}
+
+                    <motion.div
+                      style={{ top: guideCursorTop }}
+                      className="absolute left-1/2 h-4 w-10 -translate-x-1/2 -translate-y-1/2 border-x border-black"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="max-w-[18rem] shrink-0 space-y-5">
@@ -722,9 +773,9 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
                 }}
                 style={homeOffsetStyle}
                 className={cn(
-                  "h-full min-w-full",
+                  sectionAxes.home === "x" ? "h-full min-w-full" : "w-full",
                   sectionAxes.home === "y" && sectionOverflow.home <= 1
-                    ? "flex items-center"
+                    ? "h-full"
                     : "",
                 )}
               >

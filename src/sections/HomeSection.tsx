@@ -10,7 +10,8 @@ import {
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { cn } from "@/components/ui/cn";
 
-const MIN_TILE_SIZE = 315;
+const MIN_TILE_SIZE = 250;
+const MAX_TILE_SIZE = 350;
 const GAP_ESTIMATE = 12;
 
 type FocusTone = "dark" | "light" | "lime" | "blue" | "pink";
@@ -180,19 +181,19 @@ const TILE_COUNT = 12;
 function computeFluidColumns(width: number, height: number): number {
   if (width <= 0 || height <= 0) return 3;
 
-  // Pick highest column count where square tiles >= MIN_TILE_SIZE
-  // while fitting both width and height.
-  for (let cols = 6; cols >= 2; cols -= 1) {
+  // Desktop: prefer 4x3 grid, fit both dimensions with square tiles >= MIN_TILE_SIZE.
+  for (let cols = 4; cols >= 2; cols -= 1) {
     const rows = Math.ceil(TILE_COUNT / cols);
     const tileW = (width - GAP_ESTIMATE * (cols - 1)) / cols;
     const tileH = (height - GAP_ESTIMATE * (rows - 1)) / rows;
-    const tileSize = Math.min(tileW, tileH);
-    if (tileSize >= MIN_TILE_SIZE) {
+    if (Math.min(tileW, tileH) >= MIN_TILE_SIZE) {
       return cols;
     }
   }
 
-  return 2;
+  // Mobile fallback: tiles sized by width, grid scrolls vertically.
+  const widthFor2 = (width - GAP_ESTIMATE) / 2;
+  return widthFor2 >= 160 ? 2 : 1;
 }
 
 function computeTileSize(width: number, height: number, columns: number): number {
@@ -200,7 +201,19 @@ function computeTileSize(width: number, height: number, columns: number): number
   const rows = Math.ceil(TILE_COUNT / columns);
   const tileW = (width - GAP_ESTIMATE * (columns - 1)) / columns;
   const tileH = (height - GAP_ESTIMATE * (rows - 1)) / rows;
-  return Math.floor(Math.min(tileW, tileH));
+  const fitted = Math.floor(Math.min(tileW, tileH));
+  // If square tiles can't fit both dimensions, use width-based sizing (scrollable).
+  if (fitted < MIN_TILE_SIZE) {
+    return Math.min(MAX_TILE_SIZE, Math.floor(tileW));
+  }
+  return Math.min(MAX_TILE_SIZE, fitted);
+}
+
+function isScrollableGrid(width: number, height: number, columns: number, tileSize: number): boolean {
+  if (width <= 0 || height <= 0 || tileSize <= 0) return false;
+  const rows = Math.ceil(TILE_COUNT / columns);
+  const totalHeight = rows * tileSize + GAP_ESTIMATE * (rows - 1);
+  return totalHeight > height;
 }
 
 function buildExitMetadata(
@@ -556,7 +569,7 @@ function FocusTile({
           </div>
           <h3
             ref={titleRef}
-            className="display max-w-[14ch] text-right text-[clamp(1.18rem,1.72vw,2rem)] leading-[0.94] pr-2"
+            className="display ml-auto max-w-[14ch] text-right text-[clamp(1.18rem,1.72vw,2rem)] leading-[0.94] pr-2"
           >
             {title}
           </h3>
@@ -589,10 +602,23 @@ export default function HomeSection({ progress }: { progress: MotionValue<number
       return;
     }
 
+    // Height for layout decisions must come from the viewport ancestor
+    // (the overflow-hidden container in ScrollRoutes), not from self.
+    // When the grid overflows, this element's height grows to content height,
+    // which would create a circular dependency in column/tile computation.
+    let viewportAncestor: HTMLElement | null = element.parentElement;
+    while (viewportAncestor) {
+      if (getComputedStyle(viewportAncestor).overflow === "hidden") {
+        break;
+      }
+      viewportAncestor = viewportAncestor.parentElement;
+    }
+    const heightSource = viewportAncestor ?? element;
+
     const updateSize = () => {
       setContainerSize((current) => {
         const nextW = element.clientWidth;
-        const nextH = element.clientHeight;
+        const nextH = heightSource.clientHeight;
         if (Math.abs(current.width - nextW) < 2 && Math.abs(current.height - nextH) < 2) {
           return current;
         }
@@ -602,6 +628,9 @@ export default function HomeSection({ progress }: { progress: MotionValue<number
 
     const observer = new ResizeObserver(() => updateSize());
     observer.observe(element);
+    if (heightSource !== element) {
+      observer.observe(heightSource);
+    }
     updateSize();
 
     return () => observer.disconnect();
@@ -616,6 +645,7 @@ export default function HomeSection({ progress }: { progress: MotionValue<number
     () => computeTileSize(containerSize.width, containerSize.height, columns),
     [containerSize.width, containerSize.height, columns],
   );
+  const scrollable = isScrollableGrid(containerSize.width, containerSize.height, columns, tileSize);
 
   const modules = useMemo(() => buildRandomizedModules(seed), [seed]);
   const exitMetadata = useMemo(
@@ -639,7 +669,10 @@ export default function HomeSection({ progress }: { progress: MotionValue<number
   return (
     <div
       ref={rootRef}
-      className="relative flex h-full w-full items-center justify-center overflow-visible"
+      className={cn(
+        "relative flex w-full justify-center",
+        scrollable ? "min-h-full items-start py-4" : "h-full items-center overflow-visible",
+      )}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >

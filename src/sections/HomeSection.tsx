@@ -302,9 +302,9 @@ function FocusTile({
   visualColumn: number;
 }) {
   const driftSeed = seededValue(id);
-  const exitStart = 0.03 + exitRank * 0.028;
-  const exitMid = exitStart + 0.065;
-  const exitEnd = exitStart + 0.14;
+  const exitStart = 0.18 + exitRank * 0.018;
+  const exitMid = exitStart + 0.05;
+  const exitEnd = exitStart + 0.11;
   const travel = 90 + visualColumn * 18 + driftSeed * 34;
   const isDark = tone === "dark";
   const accentA = {

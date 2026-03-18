@@ -1,10 +1,16 @@
 "use client";
 
 import { useMotionValueEvent, type MotionValue } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const GRID_SIZE = 46;
 const WAVE_BAND = 5;
+const MAX_TILES = 64;
+const MAX_BLUR = 8;
+const IDLE_ENERGY = 0.12;
+const IDLE_DRIFT_SPEED = 0.15;
+const IDLE_SEED_SPEED = 0.08;
+const IDLE_INTERVAL = 180;
 
 type WaveTile = {
   id: string;
@@ -14,6 +20,7 @@ type WaveTile = {
   brightness: number;
   opacity: number;
   wash: number;
+  hue: number;
 };
 
 function hashNoise(a: number, b: number, c: number) {
@@ -27,12 +34,14 @@ function buildWaveTiles({
   front,
   seed,
   energy,
+  time,
 }: {
   rows: number;
   columns: number;
   front: number;
   seed: number;
   energy: number;
+  time: number;
 }) {
   const tiles = new Map<string, WaveTile>();
 
@@ -61,10 +70,12 @@ function buildWaveTiles({
       }
 
       const id = `${row}:${col}`;
-      const blur = 2.5 + intensity * (10 + n * 12);
+      const blur = Math.min(MAX_BLUR, 2.5 + intensity * (10 + n * 12));
       const brightness = 0.78 + intensity * 0.7 + n * 0.3;
       const opacity = Math.min(0.34, 0.05 + intensity * 0.32);
       const wash = Math.min(0.16, 0.02 + intensity * 0.14);
+
+      const hue = (time * 12 + row * 17 + col * 23 + n * 360) % 360;
 
       const existing = tiles.get(id);
       if (!existing || opacity > existing.opacity) {
@@ -76,12 +87,18 @@ function buildWaveTiles({
           brightness,
           opacity,
           wash,
+          hue,
         });
       }
     }
   }
 
-  return Array.from(tiles.values());
+  const result = Array.from(tiles.values());
+  if (result.length > MAX_TILES) {
+    result.sort((a, b) => b.opacity - a.opacity);
+    return result.slice(0, MAX_TILES);
+  }
+  return result;
 }
 
 export default function GridWaveOverlay({
@@ -97,6 +114,65 @@ export default function GridWaveOverlay({
   const seedRef = useRef(0);
   const energyRef = useRef(0);
   const idleFramesRef = useRef(0);
+  const rafRef = useRef(0);
+  const pendingTilesRef = useRef<WaveTile[] | null>(null);
+  const timeRef = useRef(0);
+  const idleTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isScrollingRef = useRef(false);
+
+  const flushTiles = useCallback(() => {
+    rafRef.current = 0;
+    if (pendingTilesRef.current !== null) {
+      setTiles(pendingTilesRef.current);
+      pendingTilesRef.current = null;
+    }
+  }, []);
+
+  const startIdleLoop = useCallback(() => {
+    if (idleTimerRef.current) return;
+    idleTimerRef.current = setInterval(() => {
+      if (isScrollingRef.current || viewport.width <= 0 || viewport.height <= 0) return;
+
+      const columns = Math.max(1, Math.ceil(viewport.width / GRID_SIZE));
+      const rows = Math.max(1, Math.ceil(viewport.height / GRID_SIZE));
+
+      timeRef.current += IDLE_INTERVAL / 1000;
+      frontRef.current += IDLE_DRIFT_SPEED;
+      if (frontRef.current > columns + WAVE_BAND) {
+        frontRef.current = -WAVE_BAND;
+      }
+      seedRef.current += IDLE_SEED_SPEED;
+      energyRef.current = IDLE_ENERGY + Math.sin(timeRef.current * 0.4) * 0.04;
+
+      const next = buildWaveTiles({
+        rows,
+        columns,
+        front: frontRef.current,
+        seed: seedRef.current,
+        energy: energyRef.current,
+        time: timeRef.current,
+      });
+
+      setTiles(next);
+    }, IDLE_INTERVAL);
+  }, [viewport.width, viewport.height]);
+
+  const stopIdleLoop = useCallback(() => {
+    if (idleTimerRef.current) {
+      clearInterval(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    startIdleLoop();
+    return () => {
+      stopIdleLoop();
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, [startIdleLoop, stopIdleLoop]);
 
   useEffect(() => {
     const measure = () => {
@@ -133,13 +209,17 @@ export default function GridWaveOverlay({
     if (absDelta < 0.00025) {
       idleFramesRef.current += 1;
       energyRef.current *= 0.9;
-      if (idleFramesRef.current > 6 || energyRef.current < 0.06) {
-        setTiles((current) => (current.length > 0 ? [] : current));
+      if (idleFramesRef.current > 6) {
+        isScrollingRef.current = false;
+        startIdleLoop();
       }
       return;
     }
 
     idleFramesRef.current = 0;
+    isScrollingRef.current = true;
+    stopIdleLoop();
+
     const direction = delta > 0 ? 1 : -1;
 
     const columns = Math.max(1, Math.ceil(viewport.width / GRID_SIZE));
@@ -157,15 +237,18 @@ export default function GridWaveOverlay({
     seedRef.current += absDelta * 95;
     energyRef.current = Math.min(1, energyRef.current * 0.7 + absDelta * 540);
 
-    setTiles(
-      buildWaveTiles({
-        rows,
-        columns,
-        front: frontRef.current,
-        seed: seedRef.current,
-        energy: energyRef.current,
-      }),
-    );
+    pendingTilesRef.current = buildWaveTiles({
+      rows,
+      columns,
+      front: frontRef.current,
+      seed: seedRef.current,
+      energy: energyRef.current,
+      time: timeRef.current,
+    });
+
+    if (!rafRef.current) {
+      rafRef.current = requestAnimationFrame(flushTiles);
+    }
   });
 
   return (
@@ -180,7 +263,7 @@ export default function GridWaveOverlay({
             width: GRID_SIZE,
             height: GRID_SIZE,
             opacity: tile.opacity,
-            backgroundColor: `rgba(255,255,255,${tile.wash.toFixed(3)})`,
+            backgroundColor: `hsla(${Math.round(tile.hue)},${Math.round(8 + tile.wash * 120)}%,${Math.round(82 + tile.brightness * 12)}%,${tile.wash.toFixed(3)})`,
             backdropFilter: `blur(${tile.blur.toFixed(2)}px) brightness(${tile.brightness.toFixed(2)})`,
             WebkitBackdropFilter: `blur(${tile.blur.toFixed(2)}px) brightness(${tile.brightness.toFixed(2)})`,
             transition:

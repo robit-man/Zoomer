@@ -4,18 +4,14 @@ import {
   motion,
   useMotionValue,
   useSpring,
-  useTime,
   useTransform,
   type MotionValue,
 } from "framer-motion";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { cn } from "@/components/ui/cn";
 
-const COMPACT_HEIGHT_THRESHOLD = 840;
-const GRID_UNIT = 46;
-const VISIBLE_COLUMNS = 3;
-const FULL_ROWS = 3;
-const COMPACT_ROWS = 2;
+const MIN_TILE_WIDTH = 320;
+const GAP_ESTIMATE = 12;
 
 type FocusTone = "dark" | "light" | "lime" | "blue" | "pink";
 
@@ -27,17 +23,6 @@ type FocusModule = {
 };
 
 type FocusDisplayModule = FocusModule & { tone: FocusTone };
-
-type LayoutMetrics = {
-  compact: boolean;
-  cellSize: number;
-  totalColumns: number;
-  totalRows: number;
-  contentWidth: number;
-  contentHeight: number;
-  offsetX: number;
-  offsetY: number;
-};
 
 const focusModules: FocusModule[] = [
   {
@@ -103,6 +88,27 @@ const focusModules: FocusModule[] = [
     detail:
       "Technology feasibility analysis, market research, pitch deck development, company structuring, and technology discovery for early-stage teams.",
   },
+  {
+    id: "10",
+    title: "Open-Source Tooling",
+    tag: "Community forge",
+    detail:
+      "Developer tools, CLI utilities, and shared infrastructure published as open-source — built for real workflows and maintained with the same rigor as internal systems.",
+  },
+  {
+    id: "11",
+    title: "VR + Immersives",
+    tag: "Spatial layer",
+    detail:
+      "Virtual reality environments, immersive experiences, and spatial interfaces for training, visualization, and interactive storytelling.",
+  },
+  {
+    id: "12",
+    title: "Robotics",
+    tag: "Motion systems",
+    detail:
+      "Robotic system design, motion planning, sensor integration, and control logic for autonomous or semi-autonomous physical platforms.",
+  },
 ];
 
 function hashSeed(value: string) {
@@ -155,7 +161,7 @@ function buildRandomizedModules(seed: number) {
   ).slice(0, 3);
   const accentTones = shuffleArray<FocusTone>(["lime", "blue", "pink"], rng);
   const neutralTones = shuffleArray<FocusTone>(
-    ["dark", "light", "dark", "light", "dark", "light"],
+    ["dark", "light", "dark", "light", "dark", "light", "dark", "light", "dark"],
     rng,
   );
 
@@ -169,60 +175,22 @@ function buildRandomizedModules(seed: number) {
   });
 }
 
-function reorderCompactModules(modules: readonly FocusDisplayModule[]) {
-  const ordered: FocusDisplayModule[] = [];
-  for (let index = 0; index < modules.length; index += 3) {
-    const first = modules[index];
-    const second = modules[index + 1];
-    const third = modules[index + 2];
-
-    if (first) {
-      ordered.push(first);
-    }
-    if (modules[index + 3]) {
-      ordered.push(modules[index + 3]);
-    }
-    if (second) {
-      ordered.push(second);
-    }
-    if (modules[index + 4]) {
-      ordered.push(modules[index + 4]);
-    }
-    if (third) {
-      ordered.push(third);
-    }
-    if (modules[index + 5]) {
-      ordered.push(modules[index + 5]);
-    }
-
-    break;
-  }
-
-  if (modules[6]) {
-    ordered.push(modules[6]);
-  }
-  if (modules[8]) {
-    ordered.push(modules[8]);
-  }
-  if (modules[7]) {
-    ordered.push(modules[7]);
-  }
-
-  return ordered;
+function computeFluidColumns(width: number): number {
+  if (width <= 0) return 3;
+  return Math.max(2, Math.min(6, Math.floor((width + GAP_ESTIMATE) / (MIN_TILE_WIDTH + GAP_ESTIMATE))));
 }
 
 function buildExitMetadata(
   modules: readonly FocusDisplayModule[],
-  compact: boolean,
+  columns: number,
 ) {
-  const columnCount = compact ? Math.ceil(modules.length / COMPACT_ROWS) : VISIBLE_COLUMNS;
   const leftColumn = 0;
-  const rightColumn = columnCount - 1;
+  const rightColumn = columns - 1;
 
   const grouped = new Map<number, Array<{ id: string; order: number }>>();
 
   modules.forEach((module, index) => {
-    const column = compact ? Math.floor(index / COMPACT_ROWS) : index % VISIBLE_COLUMNS;
+    const column = index % columns;
     const seed = seededValue(`${module.id}-${column}`);
     const items = grouped.get(column) ?? [];
     items.push({ id: module.id, order: seed });
@@ -244,78 +212,13 @@ function buildExitMetadata(
     columnsById: Object.fromEntries(
       modules.map((module, index) => [
         module.id,
-        compact ? Math.floor(index / COMPACT_ROWS) : index % VISIBLE_COLUMNS,
+        index % columns,
       ]),
     ) as Record<string, number>,
     exitRanksById: Object.fromEntries(
       exitOrder.map((item, index) => [item.id, index]),
     ) as Record<string, number>,
   };
-}
-
-function computeLayoutMetrics(width: number, height: number): LayoutMetrics {
-  if (width <= 0 || height <= 0) {
-    const fallbackCell = GRID_UNIT * 4;
-    return {
-      compact: false,
-      cellSize: fallbackCell,
-      totalColumns: VISIBLE_COLUMNS,
-      totalRows: FULL_ROWS,
-      contentWidth: fallbackCell * VISIBLE_COLUMNS,
-      contentHeight: fallbackCell * FULL_ROWS,
-      offsetX: 0,
-      offsetY: 0,
-    };
-  }
-
-  const compact = height < COMPACT_HEIGHT_THRESHOLD;
-  const visibleRows = compact ? COMPACT_ROWS : FULL_ROWS;
-  const maxCellSize = Math.min(width / VISIBLE_COLUMNS, height / visibleRows);
-  const snappedCellSize = Math.max(
-    GRID_UNIT * 2,
-    Math.floor(maxCellSize / GRID_UNIT) * GRID_UNIT,
-  );
-  const cellSize = snappedCellSize > 0 ? snappedCellSize : Math.max(96, Math.floor(maxCellSize));
-  const totalColumns = compact ? Math.ceil(focusModules.length / COMPACT_ROWS) : VISIBLE_COLUMNS;
-  const totalRows = compact ? COMPACT_ROWS : FULL_ROWS;
-  const visibleWidth = cellSize * VISIBLE_COLUMNS;
-  const visibleHeight = cellSize * visibleRows;
-  const contentWidth = cellSize * totalColumns;
-  const contentHeight = cellSize * totalRows;
-  const offsetX = compact
-    ? 0
-    : Math.max(
-        0,
-        Math.floor(Math.max(0, width - visibleWidth) / 2 / GRID_UNIT) * GRID_UNIT,
-      );
-  const offsetY = Math.max(
-    0,
-    Math.floor(Math.max(0, height - visibleHeight) / 2 / GRID_UNIT) * GRID_UNIT,
-  );
-
-  return {
-    compact,
-    cellSize,
-    totalColumns,
-    totalRows,
-    contentWidth,
-    contentHeight,
-    offsetX,
-    offsetY,
-  };
-}
-
-function cellularDiffusionOffset(time: number, seed: number, axis: "x" | "y") {
-  const t = time * 0.00035;
-  const phase = seed * Math.PI * 2;
-  const lane = axis === "x" ? 0.78 : 1.06;
-  const neighbor = axis === "x" ? 1.43 : 1.21;
-  const waveA = Math.sin(t * lane + phase);
-  const waveB = Math.cos(t * neighbor - phase * 0.72);
-  const coupled = Math.sin((waveA + waveB) * 1.35 + t * 0.58);
-  const diffusion = Math.cos(t * 0.42 + phase * 1.7 + coupled * 1.15);
-
-  return (waveA * 0.34 + waveB * 0.24 + coupled * 0.26 + diffusion * 0.16);
 }
 
 function CrosshairAccent({
@@ -331,46 +234,52 @@ function CrosshairAccent({
   seed: number;
   style: React.CSSProperties;
 }) {
-  const time = useTime();
-  const x = useTransform(() => {
-    const organicX = cellularDiffusionOffset(time.get(), seed, "x") * 12;
-    return driftX.get() + organicX;
-  });
-  const y = useTransform(() => {
-    const organicY = cellularDiffusionOffset(time.get(), seed + 0.173, "y") * 14;
-    return driftY.get() + organicY;
-  });
+  const driftClass =
+    seed < 0.33
+      ? "crosshair-drift-a"
+      : seed < 0.66
+        ? "crosshair-drift-b"
+        : "crosshair-drift-c";
+  const duration = 8 + seed * 12;
 
   return (
-    <motion.span
-      className="pointer-events-none absolute z-10 h-5 w-5 -translate-x-1/2 -translate-y-1/2"
-      style={{ ...style, x, y }}
+    <span
+      className={cn("pointer-events-none absolute z-10", driftClass)}
+      style={{
+        ...style,
+        "--crosshair-dur": `${duration.toFixed(1)}s`,
+      } as React.CSSProperties}
     >
-      <span
-        className={cn(
-          "absolute left-1/2 top-0 h-[35%] w-px -translate-x-1/2",
-          dark ? "bg-white/32" : "bg-black/26",
-        )}
-      />
-      <span
-        className={cn(
-          "absolute bottom-0 left-1/2 h-[35%] w-px -translate-x-1/2",
-          dark ? "bg-white/32" : "bg-black/26",
-        )}
-      />
-      <span
-        className={cn(
-          "absolute left-0 top-1/2 h-px w-[35%] -translate-y-1/2",
-          dark ? "bg-white/32" : "bg-black/26",
-        )}
-      />
-      <span
-        className={cn(
-          "absolute right-0 top-1/2 h-px w-[35%] -translate-y-1/2",
-          dark ? "bg-white/32" : "bg-black/26",
-        )}
-      />
-    </motion.span>
+      <motion.span
+        className="relative block h-5 w-5"
+        style={{ x: driftX, y: driftY }}
+      >
+        <span
+          className={cn(
+            "absolute left-1/2 top-0 h-[35%] w-px -translate-x-1/2",
+            dark ? "bg-white/32" : "bg-black/26",
+          )}
+        />
+        <span
+          className={cn(
+            "absolute bottom-0 left-1/2 h-[35%] w-px -translate-x-1/2",
+            dark ? "bg-white/32" : "bg-black/26",
+          )}
+        />
+        <span
+          className={cn(
+            "absolute left-0 top-1/2 h-px w-[35%] -translate-y-1/2",
+            dark ? "bg-white/32" : "bg-black/26",
+          )}
+        />
+        <span
+          className={cn(
+            "absolute right-0 top-1/2 h-px w-[35%] -translate-y-1/2",
+            dark ? "bg-white/32" : "bg-black/26",
+          )}
+        />
+      </motion.span>
+    </span>
   );
 }
 
@@ -536,7 +445,7 @@ function FocusTile({
         }
       }}
       className={cn(
-        "flag-indent-y relative flex h-full min-h-0 select-none flex-col justify-between border border-black/12 p-4 md:p-5 lg:p-6",
+        "flag-indent-y relative flex aspect-square min-h-0 select-none flex-col justify-between overflow-hidden border border-black/12 p-4 md:p-5 lg:p-6",
         tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
         tone === "lime" && "border-black/15 bg-[var(--acid)] text-[var(--ink)]",
         tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
@@ -644,7 +553,7 @@ function FocusTile({
 
 export default function HomeSection({ progress }: { progress: MotionValue<number> }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const [bounds, setBounds] = useState({ width: 0, height: 0 });
+  const [containerWidth, setContainerWidth] = useState(0);
   const [seed] = useState(() => createSeed());
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
@@ -657,33 +566,26 @@ export default function HomeSection({ progress }: { progress: MotionValue<number
       return;
     }
 
-    const updateBounds = () => {
-      setBounds({
-        width: element.clientWidth,
-        height: element.clientHeight,
+    const updateWidth = () => {
+      setContainerWidth((current) => {
+        const next = element.clientWidth;
+        return Math.abs(current - next) > 1 ? next : current;
       });
     };
 
-    const observer = new ResizeObserver(() => updateBounds());
+    const observer = new ResizeObserver(() => updateWidth());
     observer.observe(element);
-    updateBounds();
+    updateWidth();
 
     return () => observer.disconnect();
   }, []);
 
-  const layout = useMemo(
-    () => computeLayoutMetrics(bounds.width, bounds.height),
-    [bounds.height, bounds.width],
-  );
+  const columns = useMemo(() => computeFluidColumns(containerWidth), [containerWidth]);
 
-  const randomizedModules = useMemo(() => buildRandomizedModules(seed), [seed]);
-  const modules = useMemo(
-    () => (layout.compact ? reorderCompactModules(randomizedModules) : randomizedModules),
-    [layout.compact, randomizedModules],
-  );
+  const modules = useMemo(() => buildRandomizedModules(seed), [seed]);
   const exitMetadata = useMemo(
-    () => buildExitMetadata(modules, layout.compact),
-    [layout.compact, modules],
+    () => buildExitMetadata(modules, columns),
+    [columns, modules],
   );
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -702,47 +604,27 @@ export default function HomeSection({ progress }: { progress: MotionValue<number
   return (
     <div
       ref={rootRef}
-      className="relative h-full overflow-visible"
+      className="relative flex h-full w-full items-center justify-center overflow-visible px-3 md:px-5 lg:px-8"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
-      style={{ width: layout.compact ? layout.contentWidth : "100%" }}
     >
       <div
-        className="absolute left-0 top-0 transition-[width,height,left,top] duration-300 ease-out"
+        className="grid w-full max-w-[86rem] gap-2 bg-transparent transition-[grid-template-columns] duration-300 ease-out md:gap-3"
         style={{
-          left: layout.offsetX,
-          top: layout.offsetY,
-          width: layout.contentWidth,
-          height: layout.contentHeight,
+          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
         }}
       >
-        <div
-          className="grid h-full w-full gap-2 bg-transparent transition-[grid-template-columns,grid-template-rows] duration-300 ease-out md:gap-3"
-          style={
-            layout.compact
-              ? {
-                  gridTemplateRows: `repeat(${COMPACT_ROWS}, minmax(0, ${layout.cellSize}px))`,
-                  gridAutoFlow: "column",
-                  gridAutoColumns: `${layout.cellSize}px`,
-                }
-              : {
-                  gridTemplateColumns: `repeat(${VISIBLE_COLUMNS}, minmax(0, ${layout.cellSize}px))`,
-                  gridTemplateRows: `repeat(${FULL_ROWS}, minmax(0, ${layout.cellSize}px))`,
-                }
-          }
-        >
-          {modules.map((module) => (
-            <FocusTile
-              key={module.id}
-              exitRank={exitMetadata.exitRanksById[module.id]}
-              parallaxX={parallaxX}
-              parallaxY={parallaxY}
-              progress={progress}
-              visualColumn={exitMetadata.columnsById[module.id]}
-              {...module}
-            />
-          ))}
-        </div>
+        {modules.map((module) => (
+          <FocusTile
+            key={module.id}
+            exitRank={exitMetadata.exitRanksById[module.id]}
+            parallaxX={parallaxX}
+            parallaxY={parallaxY}
+            progress={progress}
+            visualColumn={exitMetadata.columnsById[module.id]}
+            {...module}
+          />
+        ))}
       </div>
     </div>
   );

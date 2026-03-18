@@ -32,6 +32,7 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cline x1='16' y1='3' x2='16' y2='12' stroke='black' stroke-width='3' stroke-linecap='square'/%3E%3Cline x1='16' y1='20' x2='16' y2='29' stroke='black' stroke-width='3' stroke-linecap='square'/%3E%3Cline x1='3' y1='16' x2='12' y2='16' stroke='black' stroke-width='3' stroke-linecap='square'/%3E%3Cline x1='20' y1='16' x2='29' y2='16' stroke='black' stroke-width='3' stroke-linecap='square'/%3E%3Cline x1='16' y1='3' x2='16' y2='12' stroke='white' stroke-width='1.5' stroke-linecap='square'/%3E%3Cline x1='16' y1='20' x2='16' y2='29' stroke='white' stroke-width='1.5' stroke-linecap='square'/%3E%3Cline x1='3' y1='16' x2='12' y2='16' stroke='white' stroke-width='1.5' stroke-linecap='square'/%3E%3Cline x1='20' y1='16' x2='29' y2='16' stroke='white' stroke-width='1.5' stroke-linecap='square'/%3E%3C/svg%3E") 16 16, crosshair;
 }
 
 body {
@@ -46,12 +47,14 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+  cursor: inherit;
 }
 
 button,
 input,
 textarea {
   font: inherit;
+  cursor: inherit;
 }
 
 ::selection {
@@ -228,4 +231,50 @@ textarea {
         100% 0,
         0 0);
   }
+
+  .section-layer {
+    will-change: transform, opacity;
+    contain: layout style paint;
+  }
+
+  .crosshair-drift-a {
+    animation: crosshair-drift-a var(--crosshair-dur, 12s) ease-in-out infinite alternate;
+  }
+
+  .crosshair-drift-b {
+    animation: crosshair-drift-b var(--crosshair-dur, 14s) ease-in-out infinite alternate;
+  }
+
+  .crosshair-drift-c {
+    animation: crosshair-drift-c var(--crosshair-dur, 10s) ease-in-out infinite alternate;
+  }
+}
+
+@keyframes crosshair-drift-a {
+  0%   { transform: translate(0px, 0px); }
+  18%  { transform: translate(4.1px, -5.6px); }
+  37%  { transform: translate(-3.4px, 2.8px); }
+  55%  { transform: translate(5.5px, 3.9px); }
+  73%  { transform: translate(-2.6px, -4.2px); }
+  100% { transform: translate(-4.8px, 5.7px); }
+}
+
+@keyframes crosshair-drift-b {
+  0%   { transform: translate(0px, 0px); }
+  14%  { transform: translate(-5.4px, 3.2px); }
+  29%  { transform: translate(2.8px, -6.1px); }
+  43%  { transform: translate(6.2px, 1.8px); }
+  57%  { transform: translate(-1.5px, 5.5px); }
+  71%  { transform: translate(-4.8px, -2.9px); }
+  86%  { transform: translate(3.5px, -4.2px); }
+  100% { transform: translate(1.2px, 4.6px); }
+}
+
+@keyframes crosshair-drift-c {
+  0%   { transform: translate(0px, 0px); }
+  20%  { transform: translate(3.8px, 4.7px); }
+  40%  { transform: translate(-6.0px, -1.3px); }
+  60%  { transform: translate(1.4px, -5.9px); }
+  80%  { transform: translate(4.5px, 3.3px); }
+  100% { transform: translate(-3.2px, 5.1px); }
 }

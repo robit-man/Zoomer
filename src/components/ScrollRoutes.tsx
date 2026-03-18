@@ -698,7 +698,7 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
           <motion.section
             style={{ opacity: homeOpacity }}
             className={cn(
-              "absolute inset-0 px-0 pb-0 pt-0",
+              "section-layer absolute inset-0 px-0 pb-0 pt-0",
               activeKey === "home" ? "pointer-events-auto" : "pointer-events-none",
             )}
           >
@@ -728,7 +728,7 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
           <motion.section
             style={{ x: offeringsX, rotate: offeringsRotate, opacity: offeringsOpacity }}
             className={cn(
-              "absolute inset-0 px-4 pb-4 pt-4 md:px-6 md:pb-6 md:pt-6 lg:px-6 lg:pb-6 lg:pt-6",
+              "section-layer absolute inset-0 px-4 pb-4 pt-4 md:px-6 md:pb-6 md:pt-6 lg:px-6 lg:pb-6 lg:pt-6",
               activeKey === "offerings"
                 ? "pointer-events-auto"
                 : "pointer-events-none",
@@ -760,7 +760,7 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
           <motion.section
             style={{ x: contactX, opacity: contactOpacity }}
             className={cn(
-              "absolute inset-0 px-4 pb-4 pt-4 md:px-6 md:pb-6 md:pt-6 lg:px-6 lg:pb-6 lg:pt-6",
+              "section-layer absolute inset-0 px-4 pb-4 pt-4 md:px-6 md:pb-6 md:pt-6 lg:px-6 lg:pb-6 lg:pt-6",
               activeKey === "contact"
                 ? "pointer-events-auto"
                 : "pointer-events-none",

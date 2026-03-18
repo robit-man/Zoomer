@@ -11,7 +11,6 @@ import {
   motion,
   useMotionValue,
   useSpring,
-  useTime,
   useTransform,
   type MotionValue,
 } from "framer-motion";
@@ -62,17 +61,6 @@ function seededValue(value: string) {
   return (hash % 1000) / 1000;
 }
 
-function cellularDiffusionOffset(time: number, seed: number, axis: "x" | "y") {
-  const t = time * 0.00033;
-  const phase = seed * Math.PI * 2;
-  const waveA = Math.sin(t * (axis === "x" ? 0.76 : 1.04) + phase);
-  const waveB = Math.cos(t * (axis === "x" ? 1.39 : 1.17) - phase * 0.68);
-  const coupled = Math.sin((waveA + waveB) * 1.3 + t * 0.56);
-  const diffusion = Math.cos(t * 0.41 + phase * 1.63 + coupled * 1.08);
-
-  return waveA * 0.34 + waveB * 0.22 + coupled * 0.28 + diffusion * 0.16;
-}
-
 function CrosshairAccent({
   dark,
   driftX,
@@ -86,46 +74,52 @@ function CrosshairAccent({
   seed: number;
   style: CSSProperties;
 }) {
-  const time = useTime();
-  const x = useTransform(() => {
-    const organicX = cellularDiffusionOffset(time.get(), seed, "x") * 12;
-    return driftX.get() + organicX;
-  });
-  const y = useTransform(() => {
-    const organicY = cellularDiffusionOffset(time.get(), seed + 0.19, "y") * 14;
-    return driftY.get() + organicY;
-  });
+  const driftClass =
+    seed < 0.33
+      ? "crosshair-drift-a"
+      : seed < 0.66
+        ? "crosshair-drift-b"
+        : "crosshair-drift-c";
+  const duration = 8 + seed * 12;
 
   return (
-    <motion.span
-      className="pointer-events-none absolute z-10 h-5 w-5 -translate-x-1/2 -translate-y-1/2"
-      style={{ ...style, x, y }}
+    <span
+      className={cn("pointer-events-none absolute z-10", driftClass)}
+      style={{
+        ...style,
+        "--crosshair-dur": `${duration.toFixed(1)}s`,
+      } as CSSProperties}
     >
-      <span
-        className={cn(
-          "absolute left-1/2 top-0 h-[35%] w-px -translate-x-1/2",
-          dark ? "bg-white/32" : "bg-black/24",
-        )}
-      />
-      <span
-        className={cn(
-          "absolute bottom-0 left-1/2 h-[35%] w-px -translate-x-1/2",
-          dark ? "bg-white/32" : "bg-black/24",
-        )}
-      />
-      <span
-        className={cn(
-          "absolute left-0 top-1/2 h-px w-[35%] -translate-y-1/2",
-          dark ? "bg-white/32" : "bg-black/24",
-        )}
-      />
-      <span
-        className={cn(
-          "absolute right-0 top-1/2 h-px w-[35%] -translate-y-1/2",
-          dark ? "bg-white/32" : "bg-black/24",
-        )}
-      />
-    </motion.span>
+      <motion.span
+        className="relative block h-5 w-5"
+        style={{ x: driftX, y: driftY }}
+      >
+        <span
+          className={cn(
+            "absolute left-1/2 top-0 h-[35%] w-px -translate-x-1/2",
+            dark ? "bg-white/32" : "bg-black/24",
+          )}
+        />
+        <span
+          className={cn(
+            "absolute bottom-0 left-1/2 h-[35%] w-px -translate-x-1/2",
+            dark ? "bg-white/32" : "bg-black/24",
+          )}
+        />
+        <span
+          className={cn(
+            "absolute left-0 top-1/2 h-px w-[35%] -translate-y-1/2",
+            dark ? "bg-white/32" : "bg-black/24",
+          )}
+        />
+        <span
+          className={cn(
+            "absolute right-0 top-1/2 h-px w-[35%] -translate-y-1/2",
+            dark ? "bg-white/32" : "bg-black/24",
+          )}
+        />
+      </motion.span>
+    </span>
   );
 }
 

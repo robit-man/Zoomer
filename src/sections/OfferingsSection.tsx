@@ -324,7 +324,7 @@ function LaneColumn({
               <div className={cn("label", isDark ? "text-white/44" : "text-black/44")}>
                 {column.id}
               </div>
-              <h3 className="display mt-3 max-w-[10ch] text-[clamp(1.52rem,1.95vw,2.45rem)] leading-[0.9]">
+              <h3 className="display mt-3 max-w-min text-[clamp(1.52rem,1.95vw,2.45rem)] leading-[0.9]">
                 {column.title}
               </h3>
             </div>

@@ -10,6 +10,7 @@ import LightingRig from "./env/LightingRig";
 import WallStrips from "./env/WallStrips";
 import Structure from "./env/Structure";
 import Furniture from "./env/Furniture";
+import Cityscape from "./env/Cityscape";
 import GlowPass from "./fx/GlowPass";
 import PhysicsProvider from "./physics/PhysicsProvider";
 import CableSystem from "./physics/CableSystem";
@@ -170,6 +171,7 @@ export default function LabScene({ debugSettings, progress }: LabSceneProps) {
 
       <group name="world">
         <AstralBackdrop />
+        <Cityscape />
         <RoomGeometry />
         <LightingRig />
         {showStrips && <WallStrips />}

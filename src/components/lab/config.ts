@@ -40,6 +40,15 @@ const DEFAULTS = {
   floor: { thickness: 0.04 },
   wall: { thickness: 0.08 },
   trim: { height: 0.1, depth: 0.015 },
+  backWindow: {
+    size: 3.0,
+    centerY: 2.0,
+    glassColor: 0x88aacc,
+    glassOpacity: 0.18,
+    glassRoughness: 0.05,
+    glassMetalness: 0.1,
+    glassIor: 1.5,
+  },
 
   materials: {
     floor:   { color: 0x2c2a27, roughness: 0.92, metalness: 0.0, clearcoat: 0.04, clearcoatRoughness: 0.96 },

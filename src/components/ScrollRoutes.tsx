@@ -572,20 +572,20 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
       ? { x: -sectionOffsets.contact }
       : { y: -sectionOffsets.contact };
 
-  const homeOpacity = useTransform(progress, [0, 0.4, 0.52], [1, 1, 0]);
+  const homeOpacity = useTransform(progress, [0, 0.32, 0.42], [1, 1, 0]);
   const offeringsOpacity = useTransform(
     progress,
-    [0.28, 0.44, 0.76, 0.86],
+    [0.38, 0.50, 0.68, 0.78],
     [0, 1, 1, 0],
   );
   const offeringsX = useTransform(
     progress,
-    [0.28, 0.44, 0.76, 0.84],
+    [0.38, 0.50, 0.68, 0.78],
     [-140, 0, 0, 220],
   );
-  const offeringsRotate = useTransform(progress, [0.62, 0.78, 0.86], [0, 1.5, -2]);
-  const contactX = useTransform(progress, [0.74, 0.94], [-160, 0]);
-  const contactOpacity = useTransform(progress, [0.74, 0.94], [0, 1]);
+  const offeringsRotate = useTransform(progress, [0.58, 0.72, 0.80], [0, 1.5, -2]);
+  const contactX = useTransform(progress, [0.84, 0.97], [-160, 0]);
+  const contactOpacity = useTransform(progress, [0.84, 0.97], [0, 1]);
   const railBackground = useTransform(
     progress,
     [

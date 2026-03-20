@@ -101,6 +101,21 @@ export function createTrimMaterial(): THREE.MeshStandardMaterial {
   });
 }
 
+export function createGlassMaterial(): THREE.MeshPhysicalMaterial {
+  const g = LAB.backWindow;
+  return new THREE.MeshPhysicalMaterial({
+    color: g.glassColor,
+    transparent: true,
+    opacity: g.glassOpacity,
+    roughness: g.glassRoughness,
+    metalness: g.glassMetalness,
+    transmission: 0.92,
+    ior: g.glassIor,
+    thickness: 0.05,
+    side: THREE.FrontSide,
+  });
+}
+
 export function createStripMaterial(phase: number, color = LAB.wallStrips.color): THREE.MeshBasicMaterial {
   const baseColor = new THREE.Color(color);
   return new THREE.MeshBasicMaterial({

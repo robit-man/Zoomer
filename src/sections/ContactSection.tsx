@@ -282,7 +282,7 @@ export default function ContactSection() {
             <div className="flex min-h-0 flex-col justify-between gap-8">
               <div>
                 <div className="label text-black/44">Project intake</div>
-                <h2 className="display mt-4 max-w-[11ch] text-[clamp(2.7rem,4.9vw,4.9rem)] leading-[0.84] text-[var(--ink)]">
+                <h2 className="display mt-4 max-w-[11ch] text-[clamp(1.35rem,2.5vw,2.45rem)] leading-[0.88] text-[var(--ink)]">
                   Software, hardtech, and startup support in one lane.
                 </h2>
                 <p className="mt-5 max-w-[34rem] text-[11px] leading-[1.55] text-black/68 md:text-[12px]">

@@ -593,7 +593,7 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
       sections.offerings.timelinePosition,
       sections.contact.timelinePosition,
     ],
-    ["#d7ff16", "#00ffbf", "#ff0060"],
+    ["#ffae00", "#ffae00", "#ffae00"],
   );
   const guideCursorTop = useTransform(progress, [0, 1], ["0%", "100%"]);
   const isCompactRail = railHeight > 0 && railHeight < 600;

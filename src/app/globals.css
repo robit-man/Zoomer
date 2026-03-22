@@ -4,8 +4,8 @@
 :root {
   color-scheme: only light;
 
-  --acid: #d7ff16;
-  --acid-deep: #b3d100;
+  --acid: #ffae00;
+  --acid-deep: #d99400;
   --paper: #f1efe7;
   --paper-strong: #fcfbf7;
   --ink: #060606;
@@ -16,8 +16,8 @@
   --graphite: #2b2926;
   --steel: #8b867c;
   --signal: #ff7d30;
-  --neon-blue: #00ffbf;
-  --neon-pink: #ff0060;
+  --neon-blue: #5a5654;
+  --neon-pink: #3d3a38;
 
   --r-panel: 26px;
   --r-control: 999px;
@@ -58,7 +58,7 @@ textarea {
 }
 
 ::selection {
-  background: rgba(215, 255, 22, 0.66);
+  background: rgba(255, 174, 0, 0.66);
   color: var(--ink);
 }
 
@@ -107,7 +107,7 @@ textarea {
     pointer-events: none;
     background:
       radial-gradient(circle at top right, rgba(6, 6, 6, 0.08), transparent 34%),
-      radial-gradient(circle at bottom left, rgba(215, 255, 22, 0.18), transparent 28%);
+      radial-gradient(circle at bottom left, rgba(255, 174, 0, 0.18), transparent 28%);
     z-index: 2;
   }
 

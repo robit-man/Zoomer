@@ -7,8 +7,10 @@ import {
   useTransform,
   type MotionValue,
 } from "framer-motion";
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { cn } from "@/components/ui/cn";
+import { BlockRevealText } from "@/components/ui/BlockRevealText";
+import { RevealPanel } from "@/components/ui/RevealPanel";
 
 const MIN_TILE_SIZE = 250;
 const MAX_TILE_SIZE = 350;
@@ -356,8 +358,8 @@ function FocusTile({
   const accentBX = useTransform(parallaxX, (value) => value * (-12 - driftSeed * 8));
   const accentBY = useTransform(parallaxY, (value) => value * (-8 - driftSeed * 10));
   const tileRef = useRef<HTMLElement | null>(null);
-  const accentBarRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
+  const titleMeasureRef = useRef<HTMLSpanElement | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [underlinePath, setUnderlinePath] = useState<{
     width: number;
@@ -368,16 +370,7 @@ function FocusTile({
     height: 0,
     d: "",
   });
-  const accentStroke =
-    tone === "dark"
-      ? "var(--acid)"
-      : tone === "lime"
-        ? "#060606"
-        : tone === "blue"
-          ? "var(--neon-pink)"
-          : tone === "pink"
-            ? "var(--neon-blue)"
-            : "var(--graphite)";
+  const accentStroke = "#ffae00";
 
   const opacity = useTransform(progress, [0, exitStart, exitMid, exitEnd], [1, 1, 0.45, 0]);
   const x = useTransform(progress, [0, exitStart, exitEnd], [0, 0, travel]);
@@ -389,45 +382,53 @@ function FocusTile({
   const blur = useTransform(progress, [0, exitStart, exitEnd], [0, 0, 12]);
   const filter = useTransform(blur, (value) => `blur(${value.toFixed(2)}px)`);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const tile = tileRef.current;
-    const accentBar = accentBarRef.current;
     const titleElement = titleRef.current;
-    if (!tile || !accentBar || !titleElement) {
+    const titleMeasureElement = titleMeasureRef.current ?? titleElement;
+
+    if (!tile || !titleElement || !titleMeasureElement) {
       return;
     }
 
     const measurePath = () => {
       const tileRect = tile.getBoundingClientRect();
-      const accentRect = accentBar.getBoundingClientRect();
-      const titleRect = titleElement.getBoundingClientRect();
+      const titleRects = Array.from(titleMeasureElement.getClientRects());
+      const titleRect =
+        titleRects[titleRects.length - 1] ?? titleMeasureElement.getBoundingClientRect();
       const width = tile.clientWidth;
       const height = tile.clientHeight;
+      const tileStyles = window.getComputedStyle(tile);
+      const paddingTop = Number.parseFloat(tileStyles.paddingTop) || 0;
+      const paddingRight = Number.parseFloat(tileStyles.paddingRight) || 0;
 
       if (width <= 0 || height <= 0) {
         return;
       }
 
-      const startX = Math.min(width - 1, Math.max(1, accentRect.right - tileRect.left));
-      const startY = Math.min(
-        height - 1,
-        Math.max(1, accentRect.top - tileRect.top + accentRect.height / 2),
-      );
+      const startX = Math.min(width - 1, Math.max(1, width - paddingRight));
+      const startY = Math.min(height - 1, Math.max(1, paddingTop + 5));
       const stemX = Math.max(1, startX - 2);
       const titleRight = Math.min(width - 2, Math.max(2, titleRect.right - tileRect.left));
       const titleLeft = Math.min(
         width - 2,
         Math.max(2, titleRect.left - tileRect.left),
       );
+      const titleLineHeight = Math.max(1, titleRect.height);
+      const underlineGap = Math.max(4, Math.min(10, titleLineHeight * 0.22));
       const underlineY = Math.min(
         height - 2,
-        Math.max(startY + 2, titleRect.bottom - tileRect.top + 5),
+        Math.max(startY + 2, titleRect.bottom - tileRect.top + underlineGap),
       );
-      const bendSize = Math.max(
-        4,
-        Math.min(12, Math.floor((underlineY - startY) / 2), Math.floor((stemX - titleRight) / 2)),
+      const availableDiagonalRun = Math.max(4, stemX - titleRight - Math.max(4, titleLineHeight * 0.18));
+      const bendReach = Math.max(
+        5,
+        Math.min(
+          Math.max(8, titleLineHeight * 0.42),
+          underlineY - startY - 2,
+          availableDiagonalRun,
+        ),
       );
-      const bendReach = bendSize + 3;
       const bendJoinY = underlineY - bendReach;
       const bendJoinX = stemX - bendReach;
 
@@ -456,8 +457,9 @@ function FocusTile({
 
     const observer = new ResizeObserver(() => measurePath());
     observer.observe(tile);
-    observer.observe(accentBar);
-    observer.observe(titleElement);
+    if (titleMeasureElement !== titleElement) {
+      observer.observe(titleMeasureElement);
+    }
 
     measurePath();
     window.addEventListener("resize", measurePath);
@@ -468,6 +470,7 @@ function FocusTile({
   }, [title]);
 
   return (
+    <RevealPanel delay={exitRank * 60} className="min-h-0">
     <motion.article
       ref={tileRef}
       style={{ x, y, opacity, filter }}
@@ -481,12 +484,12 @@ function FocusTile({
         }
       }}
       className={cn(
-        "flag-indent-y relative flex min-h-0 select-none flex-col justify-between overflow-hidden border border-black/12 p-4 md:p-5 lg:p-6",
+        "flag-indent-y relative flex h-full min-h-0 select-none flex-col justify-between overflow-hidden border border-black/12 p-4 md:p-5 lg:p-6",
         tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
-        tone === "lime" && "border-black/15 bg-[var(--acid)] text-[var(--ink)]",
+        tone === "lime" && "border-black/15 bg-[#4a4744] text-[var(--paper)]",
         tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
-        tone === "blue" && "border-black/15 bg-[var(--neon-blue)] text-[var(--ink)]",
-        tone === "pink" && "border-black/15 bg-[var(--neon-pink)] text-[var(--ink)]",
+        tone === "blue" && "border-black/15 bg-[var(--neon-blue)] text-[var(--paper)]",
+        tone === "pink" && "border-black/15 bg-[var(--neon-pink)] text-[var(--paper)]",
       )}
     >
       <CrosshairAccent
@@ -538,23 +541,9 @@ function FocusTile({
             isDark ? "text-white/45" : "text-black/45",
           )}
         >
-          {id}
+          <BlockRevealText depth={0} delay={exitRank * 100}>{id}</BlockRevealText>
         </div>
-        <div
-          ref={accentBarRef}
-          className={cn(
-            "h-[10px] w-[72px]",
-            tone === "dark"
-              ? "bg-[var(--acid)]"
-              : tone === "lime"
-                ? "bg-black"
-                : tone === "blue"
-                  ? "bg-[var(--neon-pink)]"
-                  : tone === "pink"
-                    ? "bg-[var(--neon-blue)]"
-                    : "bg-[var(--graphite)]",
-          )}
-        />
+        <div className="h-[10px] w-[72px] bg-[#ffae00]" />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col justify-between gap-3">
@@ -565,13 +554,18 @@ function FocusTile({
               isDark ? "text-white/56" : "text-black/52",
             )}
           >
-            {tag}
+            <BlockRevealText depth={1} delay={exitRank * 100}>{tag}</BlockRevealText>
           </div>
           <h3
             ref={titleRef}
-            className="display ml-auto max-w-min text-right text-[clamp(1.18rem,1.72vw,2rem)] leading-[0.94] pr-2"
+            className="display relative ml-auto max-w-[14ch] text-right text-[clamp(1.18rem,1.72vw,2rem)] leading-[0.94] pr-2"
           >
-            {title}
+            <span ref={titleMeasureRef} aria-hidden className="invisible">
+              {title}
+            </span>
+            <span className="pointer-events-none absolute inset-0 block">
+              <BlockRevealText depth={2} delay={exitRank * 100}>{title}</BlockRevealText>
+            </span>
           </h3>
         </div>
         <p
@@ -580,10 +574,11 @@ function FocusTile({
             isDark ? "text-white/72" : "text-black/70",
           )}
         >
-          {detail}
+          <BlockRevealText depth={3} delay={exitRank * 100}>{detail}</BlockRevealText>
         </p>
       </div>
     </motion.article>
+    </RevealPanel>
   );
 }
 

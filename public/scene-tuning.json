@@ -38,9 +38,9 @@
   "wallStrips": {
     "color": 16777215,
     "eastAccentIndex": 3,
-    "eastAccentColor": 5032447,
+    "eastAccentColor": 16756224,
     "westAccentIndex": 8,
-    "westAccentColor": 16734415,
+    "westAccentColor": 16777215,
     "width": 0.065,
     "height": 2.7,
     "pocketDepth": 0.016,
@@ -66,16 +66,16 @@
     "floorGlowOpacity": 0,
     "bleedLight": {
       "intensity": 4.8,
-      "color": 16120063
+      "color": 16777215
     }
   },
   "backdrop": {
     "enabled": true,
     "gridDistance": 5,
     "lineLength": 0.12,
-    "lineColor": 15135999,
+    "lineColor": 15790320,
     "lineOpacity": 0.18,
-    "atmosphereColor": 6731775,
+    "atmosphereColor": 8947848,
     "atmosphereScale": 34,
     "atmosphereAlpha": 0.42
   },

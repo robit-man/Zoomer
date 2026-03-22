@@ -12,6 +12,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { cn } from "@/components/ui/cn";
+import { BlockRevealText } from "@/components/ui/BlockRevealText";
+import { RevealPanel } from "@/components/ui/RevealPanel";
 
 type TileTone = "dark" | "light" | "lime" | "blue" | "pink";
 
@@ -196,9 +198,9 @@ function ToneBlock({
         "relative overflow-hidden border border-black/12",
         tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
         tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
-        tone === "lime" && "border-black/15 bg-[var(--acid)] text-[var(--ink)]",
-        tone === "blue" && "border-black/15 bg-[var(--neon-blue)] text-[var(--ink)]",
-        tone === "pink" && "border-black/15 bg-[var(--neon-pink)] text-[var(--ink)]",
+        tone === "lime" && "border-black/15 bg-[#4a4744] text-[var(--paper)]",
+        tone === "blue" && "border-black/15 bg-[var(--neon-blue)] text-[var(--paper)]",
+        tone === "pink" && "border-black/15 bg-[var(--neon-pink)] text-[var(--paper)]",
         className,
       )}
     >
@@ -232,8 +234,9 @@ function ServiceTile({
   const accentBY = useTransform(driftY, (value) => value * (-8 - seed * 8));
 
   return (
-    <motion.div style={{ opacity, x }} className="min-h-0">
-      <ToneBlock
+    <RevealPanel delay={index * 80} className="min-h-0">
+      <motion.div style={{ opacity, x }} className="min-h-0">
+        <ToneBlock
         tone={tile.tone}
         className="flex h-full min-h-[180px] flex-col justify-between p-4 md:p-5 xl:min-h-0"
       >
@@ -253,11 +256,11 @@ function ServiceTile({
         />
 
         <div className={cn("label", isDark ? "text-white/48" : "text-black/44")}>
-          {tile.label}
+          <BlockRevealText depth={0} delay={index * 120}>{tile.label}</BlockRevealText>
         </div>
         <div>
           <h4 className="display max-w-[14ch] text-[clamp(1.12rem,1.42vw,1.78rem)] leading-[0.92]">
-            {tile.title}
+            <BlockRevealText depth={1} delay={index * 120}>{tile.title}</BlockRevealText>
           </h4>
           <p
             className={cn(
@@ -265,11 +268,12 @@ function ServiceTile({
               isDark ? "text-white/72" : "text-black/68",
             )}
           >
-            {tile.detail}
+            <BlockRevealText depth={2} delay={index * 120}>{tile.detail}</BlockRevealText>
           </p>
         </div>
-      </ToneBlock>
-    </motion.div>
+        </ToneBlock>
+      </motion.div>
+    </RevealPanel>
   );
 }
 
@@ -298,8 +302,9 @@ function LaneColumn({
   const accentBY = useTransform(driftY, (value) => value * (-10 - seed * 8));
 
   return (
-    <motion.article style={{ opacity, x }} className="min-h-0 overflow-hidden xl:h-full">
-      <ToneBlock
+    <RevealPanel delay={index * 120} className="min-h-0 overflow-hidden xl:h-full">
+      <motion.article style={{ opacity, x }} className="h-full">
+        <ToneBlock
         tone={column.tone}
         className="grid h-full min-h-[580px] grid-rows-[auto_minmax(0,1fr)] xl:min-h-0"
       >
@@ -322,10 +327,10 @@ function LaneColumn({
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className={cn("label", isDark ? "text-white/44" : "text-black/44")}>
-                {column.id}
+                <BlockRevealText depth={0} delay={index * 200}>{column.id}</BlockRevealText>
               </div>
               <h3 className="display mt-3 max-w-min text-[clamp(1.52rem,1.95vw,2.45rem)] leading-[0.9]">
-                {column.title}
+                <BlockRevealText depth={1} delay={index * 200}>{column.title}</BlockRevealText>
               </h3>
             </div>
             <div
@@ -334,7 +339,7 @@ function LaneColumn({
                 isDark ? "text-white/42" : "text-black/38",
               )}
             >
-              {column.subtitle}
+              <BlockRevealText depth={1} delay={index * 200}>{column.subtitle}</BlockRevealText>
             </div>
           </div>
           <p
@@ -343,7 +348,7 @@ function LaneColumn({
               isDark ? "text-white/68" : "text-black/66",
             )}
           >
-            {column.summary}
+            <BlockRevealText depth={2} delay={index * 200}>{column.summary}</BlockRevealText>
           </p>
         </div>
 
@@ -359,8 +364,9 @@ function LaneColumn({
             />
           ))}
         </div>
-      </ToneBlock>
-    </motion.article>
+        </ToneBlock>
+      </motion.article>
+    </RevealPanel>
   );
 }
 

@@ -263,7 +263,7 @@ export default function GridWaveOverlay({
             width: GRID_SIZE,
             height: GRID_SIZE,
             opacity: tile.opacity,
-            backgroundColor: `hsla(${Math.round(tile.hue)},${Math.round(8 + tile.wash * 120)}%,${Math.round(82 + tile.brightness * 12)}%,${tile.wash.toFixed(3)})`,
+            backgroundColor: `hsla(${Math.round(tile.hue)},${Math.round(tile.wash * 5)}%,${Math.round(82 + tile.brightness * 12)}%,${tile.wash.toFixed(3)})`,
             backdropFilter: `blur(${tile.blur.toFixed(2)}px) brightness(${tile.brightness.toFixed(2)})`,
             WebkitBackdropFilter: `blur(${tile.blur.toFixed(2)}px) brightness(${tile.brightness.toFixed(2)})`,
             transition:

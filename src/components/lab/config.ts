@@ -43,7 +43,7 @@ const DEFAULTS = {
   backWindow: {
     size: 3.0,
     centerY: 2.0,
-    glassColor: 0x88aacc,
+    glassColor: 0x999999,
     glassOpacity: 0.18,
     glassRoughness: 0.05,
     glassMetalness: 0.1,
@@ -95,9 +95,9 @@ const DEFAULTS = {
   wallStrips: {
     color: 0xffffff,
     eastAccentIndex: 3,
-    eastAccentColor: 0x4cc9ff,
+    eastAccentColor: 0xffae00,
     westAccentIndex: 8,
-    westAccentColor: 0xff58cf,
+    westAccentColor: 0xffffff,
     countPerWall: 12,
     width: 0.065,
     height: 2.7,
@@ -125,7 +125,7 @@ const DEFAULTS = {
     floorGlowOpacity: 0,
     bleedLight: {
       intensity: 4.8,
-      color: 0xf5f8ff,
+      color: 0xffffff,
     },
   },
 
@@ -133,9 +133,9 @@ const DEFAULTS = {
     enabled: true,
     gridDistance: 5,
     lineLength: 0.12,
-    lineColor: 0xe7f4ff,
+    lineColor: 0xf0f0f0,
     lineOpacity: 0.18,
-    atmosphereColor: 0x66b7ff,
+    atmosphereColor: 0x888888,
     atmosphereScale: 34,
     atmosphereAlpha: 0.42,
   },

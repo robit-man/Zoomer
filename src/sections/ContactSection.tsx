@@ -19,6 +19,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { cn } from "@/components/ui/cn";
+import { BlockRevealText } from "@/components/ui/BlockRevealText";
+import { RevealPanel } from "@/components/ui/RevealPanel";
 
 type TileTone = "dark" | "light" | "lime" | "blue" | "pink";
 
@@ -138,9 +140,9 @@ function ToneBlock({
         "relative overflow-hidden border border-black/12",
         tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
         tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
-        tone === "lime" && "border-black/15 bg-[var(--acid)] text-[var(--ink)]",
-        tone === "blue" && "border-black/15 bg-[var(--neon-blue)] text-[var(--ink)]",
-        tone === "pink" && "border-black/15 bg-[var(--neon-pink)] text-[var(--ink)]",
+        tone === "lime" && "border-black/15 bg-[#4a4744] text-[var(--paper)]",
+        tone === "blue" && "border-black/15 bg-[var(--neon-blue)] text-[var(--paper)]",
+        tone === "pink" && "border-black/15 bg-[var(--neon-pink)] text-[var(--paper)]",
         className,
       )}
     >
@@ -175,6 +177,7 @@ function ContactLinkTile({
       rel={item.href.startsWith("mailto:") ? undefined : "noreferrer"}
       className="group min-h-0 xl:h-full"
     >
+      <RevealPanel delay={index * 100}>
       <ToneBlock
         tone={item.tone}
         className="flex h-full min-h-[168px] min-w-0 flex-col justify-between gap-4 p-4 transition-transform duration-300 group-hover:-translate-y-1 md:p-5 xl:min-h-0"
@@ -196,7 +199,7 @@ function ContactLinkTile({
 
         <div className="flex items-start justify-between gap-4">
           <div className={cn("label", isDark ? "text-white/46" : "text-black/44")}>
-            {item.label}
+            <BlockRevealText depth={0} delay={index * 140}>{item.label}</BlockRevealText>
           </div>
           <ArrowUpRight
             size={17}
@@ -214,11 +217,12 @@ function ContactLinkTile({
               className={cn("mt-0.5 shrink-0", isDark ? "text-[var(--acid)]" : "text-black/78")}
             />
             <div className="min-w-0 break-all text-[0.96rem] font-medium leading-[1.08] tracking-[-0.03em] md:text-[1.02rem] xl:text-[1.05rem]">
-              {item.value}
+              <BlockRevealText depth={1} delay={index * 140}>{item.value}</BlockRevealText>
             </div>
           </div>
         </div>
       </ToneBlock>
+      </RevealPanel>
     </a>
   );
 }
@@ -259,6 +263,7 @@ export default function ContactSection() {
       onPointerLeave={handlePointerLeave}
     >
       <div className="mx-auto grid w-full max-w-[86rem] gap-2 md:gap-3 xl:h-[min(58rem,calc(100svh-2.5rem))] xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,460px)]">
+        <RevealPanel delay={0}>
         <ToneBlock
           tone="light"
           className="grid h-full min-h-[700px] grid-rows-[minmax(0,1fr)_auto] xl:min-h-0"
@@ -281,14 +286,12 @@ export default function ContactSection() {
           <div className="grid min-h-0 gap-8 px-4 py-5 md:px-5 md:py-6 xl:grid-cols-[minmax(0,1fr)_300px]">
             <div className="flex min-h-0 flex-col justify-between gap-8">
               <div>
-                <div className="label text-black/44">Project intake</div>
+                <div className="label text-black/44"><BlockRevealText depth={0}>Project intake</BlockRevealText></div>
                 <h2 className="display mt-4 max-w-[11ch] text-[clamp(1.35rem,2.5vw,2.45rem)] leading-[0.88] text-[var(--ink)]">
-                  Software, hardtech, and startup support in one lane.
+                  <BlockRevealText depth={1}>Software, hardtech, and startup support in one lane.</BlockRevealText>
                 </h2>
                 <p className="mt-5 max-w-[34rem] text-[11px] leading-[1.55] text-black/68 md:text-[12px]">
-                  Reach out when the work spans AI agents, app development, custom
-                  websites, UI/UX, AutoCAD, electronics prototyping, 3D printed
-                  parts, or early-stage product and business strategy.
+                  <BlockRevealText depth={2}>Reach out when the work spans AI agents, app development, custom websites, UI/UX, AutoCAD, electronics prototyping, 3D printed parts, or early-stage product and business strategy.</BlockRevealText>
                 </p>
               </div>
 
@@ -308,11 +311,9 @@ export default function ContactSection() {
                   style={{ bottom: 30, left: -8 }}
                 />
 
-                <div className="label text-white/44">Best fit</div>
+                <div className="label text-white/44"><BlockRevealText depth={0} delay={300}>Best fit</BlockRevealText></div>
                 <p className="mt-4 max-w-[22rem] text-[10px] leading-[1.5] text-white/72 md:text-[11px]">
-                  Strong fit for founders, operators, and small teams who need
-                  feasibility analysis, technical discovery, product definition, or
-                  build support before they scale scope or spend deeper.
+                  <BlockRevealText depth={1} delay={300}>Strong fit for founders, operators, and small teams who need feasibility analysis, technical discovery, product definition, or build support before they scale scope or spend deeper.</BlockRevealText>
                 </p>
               </ToneBlock>
             </div>
@@ -322,27 +323,28 @@ export default function ContactSection() {
               className="flag-indent-x flex flex-col justify-between p-4 md:p-5"
             >
               <div>
-                <div className="label text-black/48">Engagement modes</div>
+                <div className="label text-black/48"><BlockRevealText depth={0} delay={500}>Engagement modes</BlockRevealText></div>
                 <div className="display mt-4 text-[clamp(1.7rem,2.2vw,2.35rem)] leading-[0.9]">
-                  Build + advisory
+                  <BlockRevealText depth={1} delay={500}>Build + advisory</BlockRevealText>
                 </div>
               </div>
 
               <div className="space-y-4 text-[10px] uppercase tracking-[0.18em] text-black/68 md:text-[11px]">
-                <div>Software delivery + product UI</div>
-                <div>Hardtech prototyping + fabrication</div>
-                <div>Startup consulting + market framing</div>
+                <div><BlockRevealText depth={2} delay={500}>Software delivery + product UI</BlockRevealText></div>
+                <div><BlockRevealText depth={2} delay={540}>Hardtech prototyping + fabrication</BlockRevealText></div>
+                <div><BlockRevealText depth={2} delay={580}>Startup consulting + market framing</BlockRevealText></div>
               </div>
             </ToneBlock>
           </div>
 
           <div className="border-t border-black/10 px-4 py-4 md:px-5">
             <div className="flex flex-wrap items-center justify-between gap-4 text-[10px] uppercase tracking-[0.18em] text-black/42 md:text-[11px]">
-              <span>Software / hardtech / startup consulting</span>
-              <span>Send scope, constraints, and timeline</span>
+              <span><BlockRevealText depth={3}>Software / hardtech / startup consulting</BlockRevealText></span>
+              <span><BlockRevealText depth={3}>Send scope, constraints, and timeline</BlockRevealText></span>
             </div>
           </div>
         </ToneBlock>
+        </RevealPanel>
 
         <div className="grid min-h-[700px] gap-2 md:gap-3 xl:h-full xl:min-h-0 xl:grid-rows-[repeat(5,minmax(0,1fr))]">
           {contactLinks.map((item, index) => (
@@ -355,14 +357,16 @@ export default function ContactSection() {
             />
           ))}
 
+          <RevealPanel delay={400}>
           <ToneBlock tone="lime" className="flex h-full items-end justify-between gap-4 p-4 md:p-5">
             <div className="display max-w-[10ch] text-[clamp(1.45rem,1.8vw,2rem)] leading-[0.92]">
-              New project intake open.
+              <BlockRevealText depth={0} delay={600}>New project intake open.</BlockRevealText>
             </div>
             <div className="display shrink-0 leading-none text-black text-[clamp(2.4rem,5vw,5rem)]">
               +
             </div>
           </ToneBlock>
+          </RevealPanel>
         </div>
       </div>
     </div>

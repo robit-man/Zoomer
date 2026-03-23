@@ -1,16 +1,21 @@
 "use client";
 
 import {
+  AnimatePresence,
   motion,
   useMotionValue,
   useSpring,
   useTransform,
   type MotionValue,
 } from "framer-motion";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { cn } from "@/components/ui/cn";
 import { BlockRevealText } from "@/components/ui/BlockRevealText";
 import { RevealPanel } from "@/components/ui/RevealPanel";
+
+const EggScene = lazy(() => import("@/components/EggScene"));
+
+type ExpandPhase = "idle" | "dismissing" | "expanded" | "restoring";
 
 const MIN_TILE_SIZE = 250;
 const MAX_TILE_SIZE = 350;
@@ -240,11 +245,11 @@ function buildExitMetadata(
 
   const middleGroup = [...grouped.entries()]
     .filter(([column]) => column !== leftColumn && column !== rightColumn)
-    .sort((a, b) => b[0] - a[0])
+    .sort((a, b) => a[0] - b[0])
     .flatMap(([, items]) => [...items].sort((a, b) => a.order - b.order))
     .sort((a, b) => a.order - b.order);
 
-  const exitOrder = [...rightGroup, ...middleGroup, ...leftGroup];
+  const exitOrder = [...leftGroup, ...middleGroup, ...rightGroup];
 
   return {
     columnsById: Object.fromEntries(
@@ -324,7 +329,10 @@ function CrosshairAccent({
 function FocusTile({
   detail,
   exitRank,
+  expandedId,
+  expandPhase,
   id,
+  onSelect,
   parallaxX,
   parallaxY,
   progress,
@@ -334,6 +342,9 @@ function FocusTile({
   visualColumn,
 }: FocusDisplayModule & {
   exitRank: number;
+  expandedId: string | null;
+  expandPhase: ExpandPhase;
+  onSelect: (id: string) => void;
   parallaxX: MotionValue<number>;
   parallaxY: MotionValue<number>;
   progress: MotionValue<number>;
@@ -343,7 +354,7 @@ function FocusTile({
   const exitStart = 0.18 + exitRank * 0.018;
   const exitMid = exitStart + 0.05;
   const exitEnd = exitStart + 0.11;
-  const travel = 90 + visualColumn * 18 + driftSeed * 34;
+  const travel = -(90 + visualColumn * 18 + driftSeed * 34);
   const isDark = tone === "dark";
   const accentA = {
     top: `${18 + driftSeed * 44}%`,
@@ -372,6 +383,12 @@ function FocusTile({
   });
   const accentStroke = "#ffae00";
 
+  const isSelected = expandedId === id;
+  const isOtherDismissing = expandedId !== null && !isSelected && (expandPhase === "dismissing" || expandPhase === "expanded");
+  const isRestoring = expandPhase === "restoring" && !isSelected;
+  const isHiddenByExpand = expandPhase === "expanded" && !isSelected;
+  const dismissDelay = seededValue(`dismiss-${id}`) * 0.22;
+
   const opacity = useTransform(progress, [0, exitStart, exitMid, exitEnd], [1, 1, 0.45, 0]);
   const x = useTransform(progress, [0, exitStart, exitEnd], [0, 0, travel]);
   const y = useTransform(
@@ -396,6 +413,7 @@ function FocusTile({
       const titleRects = Array.from(titleMeasureElement.getClientRects());
       const titleRect =
         titleRects[titleRects.length - 1] ?? titleMeasureElement.getBoundingClientRect();
+      const titleFullRect = titleElement.getBoundingClientRect();
       const width = tile.clientWidth;
       const height = tile.clientHeight;
       const tileStyles = window.getComputedStyle(tile);
@@ -415,10 +433,10 @@ function FocusTile({
         Math.max(2, titleRect.left - tileRect.left),
       );
       const titleLineHeight = Math.max(1, titleRect.height);
-      const underlineGap = Math.max(4, Math.min(10, titleLineHeight * 0.22));
+      const titleElementBottom = titleFullRect.bottom - tileRect.top;
       const underlineY = Math.min(
         height - 2,
-        Math.max(startY + 2, titleRect.bottom - tileRect.top + underlineGap),
+        Math.max(startY + 2, titleElementBottom + 24),
       );
       const availableDiagonalRun = Math.max(4, stemX - titleRight - Math.max(4, titleLineHeight * 0.18));
       const bendReach = Math.max(
@@ -470,10 +488,29 @@ function FocusTile({
   }, [title]);
 
   return (
-    <RevealPanel delay={exitRank * 60} className="min-h-0">
+    <RevealPanel delay={exitRank * 60} className={cn("min-h-0", isHiddenByExpand && "invisible")}>
     <motion.article
       ref={tileRef}
-      style={{ x, y, opacity, filter }}
+      style={expandPhase === "idle" || expandPhase === "restoring" ? { x, y, opacity, filter } : undefined}
+      animate={
+        isOtherDismissing
+          ? { opacity: 0, scale: 0.86, filter: "blur(4px)" }
+          : isRestoring
+            ? { opacity: 1, scale: 1, filter: "blur(0px)" }
+            : isSelected && expandPhase === "dismissing"
+              ? { opacity: 1, scale: 1 }
+              : {}
+      }
+      transition={
+        isOtherDismissing
+          ? { delay: dismissDelay, duration: 0.32, ease: [0.22, 1, 0.36, 1] }
+          : isRestoring
+            ? { delay: dismissDelay + 0.1, duration: 0.38, ease: [0.22, 1, 0.36, 1] }
+            : { duration: 0.3 }
+      }
+      onClick={() => {
+        if (expandPhase === "idle") onSelect(id);
+      }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       onFocusCapture={() => setIsHovered(true)}
@@ -485,11 +522,13 @@ function FocusTile({
       }}
       className={cn(
         "flag-indent-y relative flex h-full min-h-0 select-none flex-col justify-between overflow-hidden border border-black/12 p-4 md:p-5 lg:p-6",
+        expandPhase === "idle" && "cursor-pointer",
+        isSelected && expandPhase === "expanded" && "invisible",
         tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
         tone === "lime" && "border-black/15 bg-[#4a4744] text-[var(--paper)]",
         tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
-        tone === "blue" && "border-black/15 bg-[var(--neon-blue)] text-[var(--paper)]",
-        tone === "pink" && "border-black/15 bg-[var(--neon-pink)] text-[var(--paper)]",
+        tone === "blue" && "border-black/15 bg-[var(--grey-mid)] text-[var(--paper)]",
+        tone === "pink" && "border-black/15 bg-[var(--grey-deep)] text-[var(--paper)]",
       )}
     >
       <CrosshairAccent
@@ -538,7 +577,7 @@ function FocusTile({
         <div
           className={cn(
             "label",
-            isDark ? "text-white/45" : "text-black/45",
+            isDark ? "text-white/64" : "text-black/45",
           )}
         >
           <BlockRevealText depth={0} delay={exitRank * 100}>{id}</BlockRevealText>
@@ -551,19 +590,19 @@ function FocusTile({
           <div
             className={cn(
               "label mb-3 text-left",
-              isDark ? "text-white/56" : "text-black/52",
+              isDark ? "text-white/70" : "text-black/52",
             )}
           >
             <BlockRevealText depth={1} delay={exitRank * 100}>{tag}</BlockRevealText>
           </div>
           <h3
             ref={titleRef}
-            className="display relative ml-auto max-w-[14ch] text-right text-[clamp(1.18rem,1.72vw,2rem)] leading-[0.94] pr-2"
+            className="display relative ml-auto max-w-[14ch] text-right text-[clamp(1.18rem,1.72vw,2rem)] leading-[0.94]"
           >
-            <span ref={titleMeasureRef} aria-hidden className="invisible">
+            <span ref={titleMeasureRef} aria-hidden className="invisible mr-3 mb-1">
               {title}
             </span>
-            <span className="pointer-events-none absolute inset-0 block">
+            <span className="pointer-events-none absolute inset-0 mr-3 mb-1 block">
               <BlockRevealText depth={2} delay={exitRank * 100}>{title}</BlockRevealText>
             </span>
           </h3>
@@ -571,7 +610,7 @@ function FocusTile({
         <p
           className={cn(
             "max-w-[26rem] text-[10px] leading-[1.45] md:text-[11px]",
-            isDark ? "text-white/72" : "text-black/70",
+            isDark ? "text-white/85" : "text-black/70",
           )}
         >
           <BlockRevealText depth={3} delay={exitRank * 100}>{detail}</BlockRevealText>
@@ -582,14 +621,149 @@ function FocusTile({
   );
 }
 
+function ExpandedPanel({
+  module,
+  onClose,
+  containerWidth,
+  containerHeight,
+  tileSize,
+}: {
+  module: FocusDisplayModule;
+  onClose: () => void;
+  containerWidth: number;
+  containerHeight: number;
+  tileSize: number;
+}) {
+  // Opening: step 0 (width expand) → 1 (height expand, fully open)
+  // Closing: step 2 (height shrink) → 3 (width shrink + fade) → onClose()
+  const [step, setStep] = useState(0);
+  const isDark = module.tone === "dark" || module.tone === "lime" || module.tone === "blue" || module.tone === "pink";
+
+  const getAnimateTarget = () => {
+    switch (step) {
+      case 0: return { width: containerWidth, height: tileSize, opacity: 1 };
+      case 1: return { width: containerWidth, height: containerHeight, opacity: 1 };
+      case 2: return { width: containerWidth, height: tileSize, opacity: 1 };
+      case 3: return { width: tileSize, height: tileSize, opacity: 0 };
+      default: return {};
+    }
+  };
+
+  return (
+    <motion.div
+      className={cn(
+        "absolute z-30 flex flex-col overflow-hidden border border-black/12",
+        module.tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
+        module.tone === "lime" && "border-black/15 bg-[#4a4744] text-[var(--paper)]",
+        module.tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
+        module.tone === "blue" && "border-black/15 bg-[var(--grey-mid)] text-[var(--paper)]",
+        module.tone === "pink" && "border-black/15 bg-[var(--grey-deep)] text-[var(--paper)]",
+      )}
+      style={{
+        left: "50%",
+        top: "50%",
+        x: "-50%",
+        y: "-50%",
+      }}
+      initial={{ width: tileSize, height: tileSize, opacity: 1 }}
+      animate={getAnimateTarget()}
+      transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+      onAnimationComplete={() => {
+        if (step === 0) setStep(1);
+        else if (step === 2) setStep(3);
+        else if (step === 3) onClose();
+      }}
+    >
+      <div className="flex shrink-0 items-center justify-between border-b border-current/10 px-5 py-4">
+        <div className="flex items-center gap-4">
+          <span className={cn("label", isDark ? "text-white/64" : "text-black/45")}>{module.id}</span>
+          <span className={cn("label", isDark ? "text-white/70" : "text-black/52")}>{module.tag}</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => { if (step === 1) setStep(2); }}
+          className={cn(
+            "label cursor-pointer px-3 py-1 transition-colors",
+            isDark ? "text-white/64 hover:text-white" : "text-black/45 hover:text-black",
+          )}
+        >
+          Close
+        </button>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-4 p-5">
+        <h3 className="display text-[clamp(1.4rem,2.2vw,2.6rem)] leading-[0.92]">
+          {module.title}
+        </h3>
+        <p className={cn(
+          "max-w-[36rem] text-[11px] leading-[1.5] md:text-[12px]",
+          isDark ? "text-white/85" : "text-black/70",
+        )}>
+          {module.detail}
+        </p>
+
+        <div className="relative min-h-0 flex-1 overflow-hidden">
+          {step === 1 && (
+            <Suspense fallback={
+              <div className="flex h-full items-center justify-center">
+                <div className={cn("label animate-pulse", isDark ? "text-white/40" : "text-black/30")}>
+                  Loading scene...
+                </div>
+              </div>
+            }>
+              <motion.div
+                className="h-full w-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+              >
+                <EggScene />
+              </motion.div>
+            </Suspense>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function HomeSection({ progress }: { progress: MotionValue<number> }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [seed] = useState(() => createSeed());
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandPhase, setExpandPhase] = useState<ExpandPhase>("idle");
+  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
   const parallaxX = useSpring(pointerX, { stiffness: 90, damping: 22, mass: 0.45 });
   const parallaxY = useSpring(pointerY, { stiffness: 90, damping: 22, mass: 0.45 });
+
+  const handleSelect = useCallback((id: string) => {
+    if (expandPhase !== "idle") return;
+    setExpandedId(id);
+    setExpandPhase("dismissing");
+    dismissTimerRef.current = setTimeout(() => {
+      setExpandPhase("expanded");
+    }, 520);
+  }, [expandPhase]);
+
+  const handleClose = useCallback(() => {
+    if (expandPhase !== "expanded") return;
+    setExpandPhase("restoring");
+    restoreTimerRef.current = setTimeout(() => {
+      setExpandedId(null);
+      setExpandPhase("idle");
+    }, 620);
+  }, [expandPhase]);
+
+  useEffect(() => {
+    return () => {
+      if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+      if (restoreTimerRef.current) clearTimeout(restoreTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const element = rootRef.current;
@@ -672,7 +846,7 @@ export default function HomeSection({ progress }: { progress: MotionValue<number
       onPointerLeave={handlePointerLeave}
     >
       <div
-        className="grid gap-2 bg-transparent transition-[grid-template-columns,grid-template-rows] duration-300 ease-out md:gap-3"
+        className="relative grid gap-2 bg-transparent transition-[grid-template-columns,grid-template-rows] duration-300 ease-out md:gap-3"
         style={{
           gridTemplateColumns: tileSize > 0 ? `repeat(${columns}, ${tileSize}px)` : `repeat(${columns}, minmax(0, 1fr))`,
           gridTemplateRows: tileSize > 0 ? `repeat(${rows}, ${tileSize}px)` : undefined,
@@ -682,6 +856,9 @@ export default function HomeSection({ progress }: { progress: MotionValue<number
           <FocusTile
             key={module.id}
             exitRank={exitMetadata.exitRanksById[module.id]}
+            expandedId={expandedId}
+            expandPhase={expandPhase}
+            onSelect={handleSelect}
             parallaxX={parallaxX}
             parallaxY={parallaxY}
             progress={progress}
@@ -689,6 +866,26 @@ export default function HomeSection({ progress }: { progress: MotionValue<number
             {...module}
           />
         ))}
+
+        <AnimatePresence>
+          {expandPhase === "expanded" && expandedId && (() => {
+            const expandedModule = modules.find((m) => m.id === expandedId);
+            if (!expandedModule) return null;
+            const gridEl = rootRef.current?.querySelector(".grid") as HTMLElement | null;
+            const gridWidth = gridEl?.clientWidth ?? containerSize.width;
+            const gridHeight = gridEl?.clientHeight ?? containerSize.height;
+            return (
+              <ExpandedPanel
+                key="expanded-panel"
+                module={expandedModule}
+                onClose={handleClose}
+                containerWidth={gridWidth}
+                containerHeight={gridHeight}
+                tileSize={tileSize}
+              />
+            );
+          })()}
+        </AnimatePresence>
       </div>
     </div>
   );

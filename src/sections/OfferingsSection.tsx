@@ -199,8 +199,8 @@ function ToneBlock({
         tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
         tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
         tone === "lime" && "border-black/15 bg-[#4a4744] text-[var(--paper)]",
-        tone === "blue" && "border-black/15 bg-[var(--neon-blue)] text-[var(--paper)]",
-        tone === "pink" && "border-black/15 bg-[var(--neon-pink)] text-[var(--paper)]",
+        tone === "blue" && "border-black/15 bg-[var(--grey-mid)] text-[var(--paper)]",
+        tone === "pink" && "border-black/15 bg-[var(--grey-deep)] text-[var(--paper)]",
         className,
       )}
     >
@@ -226,7 +226,7 @@ function ServiceTile({
   const start = 0.18 + index * 0.08;
   const end = 0.68 + index * 0.08;
   const opacity = useTransform(progress, [start, end], [0.12, 1]);
-  const x = useTransform(progress, [start, end], [-20 + index * 6, 0]);
+  const x = useTransform(progress, [start, end], [20 + index * 6, 0]);
   const isDark = tile.tone === "dark";
   const accentAX = useTransform(driftX, (value) => value * (8 + seed * 8));
   const accentAY = useTransform(driftY, (value) => value * (10 + seed * 9));
@@ -255,7 +255,7 @@ function ServiceTile({
           style={{ bottom: `${14 + seed * 26}%`, left: -8 }}
         />
 
-        <div className={cn("label", isDark ? "text-white/48" : "text-black/44")}>
+        <div className={cn("label", isDark ? "text-white/64" : "text-black/44")}>
           <BlockRevealText depth={0} delay={index * 120}>{tile.label}</BlockRevealText>
         </div>
         <div>
@@ -265,7 +265,7 @@ function ServiceTile({
           <p
             className={cn(
               "mt-3 max-w-[24rem] text-[10px] leading-[1.45] md:text-[11px]",
-              isDark ? "text-white/72" : "text-black/68",
+              isDark ? "text-white/85" : "text-black/68",
             )}
           >
             <BlockRevealText depth={2} delay={index * 120}>{tile.detail}</BlockRevealText>
@@ -293,7 +293,7 @@ function LaneColumn({
   const start = 0.08 + index * 0.12;
   const end = 0.62 + index * 0.12;
   const opacity = useTransform(progress, [start, end], [0.2, 1]);
-  const x = useTransform(progress, [start, end], [-48 + index * 12, 0]);
+  const x = useTransform(progress, [start, end], [48 + index * 12, 0]);
   const seed = seededValue(`${column.title}-${column.id}`);
   const isDark = column.tone === "dark";
   const accentAX = useTransform(driftX, (value) => value * (10 + seed * 10));
@@ -326,7 +326,7 @@ function LaneColumn({
         <div className={cn("border-b px-4 py-4 md:px-5 md:py-5", isDark ? "border-white/10" : "border-black/10")}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className={cn("label", isDark ? "text-white/44" : "text-black/44")}>
+              <div className={cn("label", isDark ? "text-white/64" : "text-black/44")}>
                 <BlockRevealText depth={0} delay={index * 200}>{column.id}</BlockRevealText>
               </div>
               <h3 className="display mt-3 max-w-min text-[clamp(1.52rem,1.95vw,2.45rem)] leading-[0.9]">
@@ -336,7 +336,7 @@ function LaneColumn({
             <div
               className={cn(
                 "max-w-[8rem] text-right text-[10px] uppercase tracking-[0.18em]",
-                isDark ? "text-white/42" : "text-black/38",
+                isDark ? "text-white/64" : "text-black/38",
               )}
             >
               <BlockRevealText depth={1} delay={index * 200}>{column.subtitle}</BlockRevealText>
@@ -345,7 +345,7 @@ function LaneColumn({
           <p
             className={cn(
               "mt-4 max-w-[22rem] text-[10px] leading-[1.45] md:text-[11px]",
-              isDark ? "text-white/68" : "text-black/66",
+              isDark ? "text-white/82" : "text-black/66",
             )}
           >
             <BlockRevealText depth={2} delay={index * 200}>{column.summary}</BlockRevealText>

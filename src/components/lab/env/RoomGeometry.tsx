@@ -109,9 +109,60 @@ export default function RoomGeometry() {
         <planeGeometry args={[win.size, win.size]} />
       </mesh>
 
-      {/* Wall S (-Z) */}
-      <mesh name="wall_S" position={[0, H / 2, -HALF_L - wt / 2]} receiveShadow material={wallMat}>
-        <boxGeometry args={[W, H, wt]} />
+      {/* Front wall (S) — 4 panels around window */}
+      <group name="wall_S_panels">
+        {/* Left panel */}
+        <mesh
+          name="wall_S_left"
+          position={[(-HALF_W + leftW / 2), H / 2, -wallZ]}
+          receiveShadow
+          material={wallMat}
+        >
+          <boxGeometry args={[leftW, H, wt]} />
+        </mesh>
+
+        {/* Right panel */}
+        <mesh
+          name="wall_S_right"
+          position={[(HALF_W - rightW / 2), H / 2, -wallZ]}
+          receiveShadow
+          material={wallMat}
+        >
+          <boxGeometry args={[rightW, H, wt]} />
+        </mesh>
+
+        {/* Top panel (above window) */}
+        {topH > 0.01 && (
+          <mesh
+            name="wall_S_top"
+            position={[0, winTop + topH / 2, -wallZ]}
+            receiveShadow
+            material={wallMat}
+          >
+            <boxGeometry args={[win.size, topH, wt]} />
+          </mesh>
+        )}
+
+        {/* Bottom panel (below window) */}
+        {botH > 0.01 && (
+          <mesh
+            name="wall_S_bottom"
+            position={[0, botH / 2, -wallZ]}
+            receiveShadow
+            material={wallMat}
+          >
+            <boxGeometry args={[win.size, botH, wt]} />
+          </mesh>
+        )}
+      </group>
+
+      {/* South window glass */}
+      <mesh
+        name="window_glass_S"
+        position={[0, win.centerY, -wallZ]}
+        material={glassMat}
+      >
+        <planeGeometry args={[win.size, win.size]} />
       </mesh>
 
       {/* Wall E (+X) */}

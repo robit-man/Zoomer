@@ -75,7 +75,7 @@ function buildWaveTiles({
       const opacity = Math.min(0.34, 0.05 + intensity * 0.32);
       const wash = Math.min(0.16, 0.02 + intensity * 0.14);
 
-      const hue = (time * 12 + row * 17 + col * 23 + n * 360) % 360;
+      const hue = 38 + ((time * 3 + row * 5 + col * 7 + n * 20) % 16);
 
       const existing = tiles.get(id);
       if (!existing || opacity > existing.opacity) {

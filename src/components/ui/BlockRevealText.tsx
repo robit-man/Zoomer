@@ -116,7 +116,7 @@ export function BlockRevealText({
                 done || i < revealed
                   ? undefined
                   : i < typed
-                    ? { backgroundColor: "currentColor" }
+                    ? { backgroundColor: "currentColor", WebkitTextFillColor: "transparent" }
                     : { opacity: 0 }
               }
             >

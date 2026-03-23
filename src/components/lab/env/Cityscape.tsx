@@ -96,10 +96,10 @@ float windowLights(vec2 uv, float depth, float scale) {
   float winRow = floor(uv.y / h * 12.0);
   float lit = step(0.45, hash(vec2(winCell + cellX * 7.0, winRow + depth * 13.0)));
 
-  // Occasional neon colored window
-  float neon = step(0.92, hash(vec2(winCell + cellX * 3.0 + 50.0, winRow + depth * 7.0 + 50.0)));
+  // Occasional bright accent window
+  float accent = step(0.92, hash(vec2(winCell + cellX * 3.0 + 50.0, winRow + depth * 7.0 + 50.0)));
 
-  return isWindow * lit * (1.0 + neon * 2.0);
+  return isWindow * lit * (1.0 + accent * 2.0);
 }
 
 void main() {
@@ -145,34 +145,24 @@ void main() {
     float wins = windowLights(bUv, depth, scale);
     float winBrightness = (1.0 - fog) * 0.8;
 
-    // Neon colors based on position
-    vec3 neonColor;
-    float neonPhase = hash(vec2(floor(bUv.x * scale), depth)) * 6.28;
-    neonColor = vec3(
-      0.5 + 0.5 * sin(neonPhase),
-      0.5 + 0.5 * sin(neonPhase + 2.094),
-      0.5 + 0.5 * sin(neonPhase + 4.188)
-    );
-    // Saturate the neon
-    neonColor = mix(vec3(1.0), neonColor, 0.7);
+    // Warm amber accent color (#ffae00) for bright windows
+    vec3 accentColor = vec3(1.0, 0.682, 0.0);
+    float warmShift = hash(vec2(floor(bUv.x * scale), depth)) * 0.15;
+    vec3 warmColor = mix(accentColor, vec3(0.95, 0.78, 0.3), warmShift);
 
-    vec3 winColor = mix(vec3(0.9, 0.85, 0.7), neonColor, step(1.5, wins)) * winBrightness;
+    vec3 winColor = mix(vec3(0.9, 0.85, 0.7), warmColor, step(1.5, wins)) * winBrightness;
 
     if (b > 0.5 && bUv.y > 0.0) {
       color = buildingColor + winColor * wins;
     }
   }
 
-  // Distant neon signs (scattered bright spots at horizon)
+  // Distant warm signs (scattered bright spots at horizon)
   float signNoise = hash(vec2(floor(uv.x * 80.0), floor(uv.y * 80.0)));
   float inHorizonBand = smoothstep(horizon - 0.06, horizon, uv.y) * smoothstep(horizon + 0.12, horizon + 0.02, uv.y);
   if (signNoise > 0.994 && inHorizonBand > 0.1) {
-    float signPhase = signNoise * 100.0;
-    vec3 signColor = vec3(
-      0.5 + 0.5 * sin(signPhase),
-      0.5 + 0.5 * sin(signPhase + 2.0),
-      0.5 + 0.5 * sin(signPhase + 4.0)
-    );
+    float warmVar = signNoise * 0.2;
+    vec3 signColor = vec3(1.0, 0.682 + warmVar, warmVar);
     float flicker = 0.7 + 0.3 * sin(uTime * (2.0 + signNoise * 4.0));
     color += signColor * inHorizonBand * flicker * 1.2;
   }
@@ -185,17 +175,18 @@ void main() {
 }
 `;
 
-export default function Cityscape() {
+export default function Cityscape({ side = "north" }: { side?: "north" | "south" }) {
   const matRef = useRef<THREE.ShaderMaterial>(null);
   const win = LAB.backWindow;
   const wallZ = HALF_L + LAB.wall.thickness / 2;
   const planeSize = win.size * 3.5;
+  const isNorth = side === "north";
 
   const uniforms = useMemo(
     () => ({
-      uTime: { value: 0 },
+      uTime: { value: isNorth ? 0 : 47 },
     }),
-    [],
+    [isNorth],
   );
 
   useFrame((_, delta) => {
@@ -206,8 +197,8 @@ export default function Cityscape() {
 
   return (
     <mesh
-      name="cityscape"
-      position={[0, H * 0.48, wallZ + 0.5]}
+      name={`cityscape-${side}`}
+      position={[0, H * 0.48, isNorth ? wallZ + 0.5 : -(wallZ + 0.5)]}
     >
       <planeGeometry args={[planeSize, planeSize]} />
       <shaderMaterial
@@ -215,7 +206,7 @@ export default function Cityscape() {
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
         uniforms={uniforms}
-        side={THREE.BackSide}
+        side={isNorth ? THREE.BackSide : THREE.FrontSide}
         toneMapped={false}
       />
     </mesh>

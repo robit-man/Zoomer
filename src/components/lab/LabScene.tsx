@@ -171,7 +171,8 @@ export default function LabScene({ debugSettings, progress }: LabSceneProps) {
 
       <group name="world">
         <AstralBackdrop />
-        <Cityscape />
+        <Cityscape side="north" />
+        <Cityscape side="south" />
         <RoomGeometry />
         <LightingRig />
         {showStrips && <WallStrips />}

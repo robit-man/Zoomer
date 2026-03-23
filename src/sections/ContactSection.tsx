@@ -141,8 +141,8 @@ function ToneBlock({
         tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
         tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
         tone === "lime" && "border-black/15 bg-[#4a4744] text-[var(--paper)]",
-        tone === "blue" && "border-black/15 bg-[var(--neon-blue)] text-[var(--paper)]",
-        tone === "pink" && "border-black/15 bg-[var(--neon-pink)] text-[var(--paper)]",
+        tone === "blue" && "border-black/15 bg-[var(--grey-mid)] text-[var(--paper)]",
+        tone === "pink" && "border-black/15 bg-[var(--grey-deep)] text-[var(--paper)]",
         className,
       )}
     >
@@ -198,14 +198,14 @@ function ContactLinkTile({
         />
 
         <div className="flex items-start justify-between gap-4">
-          <div className={cn("label", isDark ? "text-white/46" : "text-black/44")}>
+          <div className={cn("label", isDark ? "text-white/64" : "text-black/44")}>
             <BlockRevealText depth={0} delay={index * 140}>{item.label}</BlockRevealText>
           </div>
           <ArrowUpRight
             size={17}
             className={cn(
               "transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1",
-              isDark ? "text-white/54" : "text-black/42",
+              isDark ? "text-white/70" : "text-black/42",
             )}
           />
         </div>
@@ -311,8 +311,8 @@ export default function ContactSection() {
                   style={{ bottom: 30, left: -8 }}
                 />
 
-                <div className="label text-white/44"><BlockRevealText depth={0} delay={300}>Best fit</BlockRevealText></div>
-                <p className="mt-4 max-w-[22rem] text-[10px] leading-[1.5] text-white/72 md:text-[11px]">
+                <div className="label text-white/64"><BlockRevealText depth={0} delay={300}>Best fit</BlockRevealText></div>
+                <p className="mt-4 max-w-[22rem] text-[10px] leading-[1.5] text-white/85 md:text-[11px]">
                   <BlockRevealText depth={1} delay={300}>Strong fit for founders, operators, and small teams who need feasibility analysis, technical discovery, product definition, or build support before they scale scope or spend deeper.</BlockRevealText>
                 </p>
               </ToneBlock>
@@ -323,13 +323,13 @@ export default function ContactSection() {
               className="flag-indent-x flex flex-col justify-between p-4 md:p-5"
             >
               <div>
-                <div className="label text-black/48"><BlockRevealText depth={0} delay={500}>Engagement modes</BlockRevealText></div>
+                <div className="label text-white/64"><BlockRevealText depth={0} delay={500}>Engagement modes</BlockRevealText></div>
                 <div className="display mt-4 text-[clamp(1.7rem,2.2vw,2.35rem)] leading-[0.9]">
                   <BlockRevealText depth={1} delay={500}>Build + advisory</BlockRevealText>
                 </div>
               </div>
 
-              <div className="space-y-4 text-[10px] uppercase tracking-[0.18em] text-black/68 md:text-[11px]">
+              <div className="space-y-4 text-[10px] uppercase tracking-[0.18em] text-white/78 md:text-[11px]">
                 <div><BlockRevealText depth={2} delay={500}>Software delivery + product UI</BlockRevealText></div>
                 <div><BlockRevealText depth={2} delay={540}>Hardtech prototyping + fabrication</BlockRevealText></div>
                 <div><BlockRevealText depth={2} delay={580}>Startup consulting + market framing</BlockRevealText></div>
@@ -362,7 +362,7 @@ export default function ContactSection() {
             <div className="display max-w-[10ch] text-[clamp(1.45rem,1.8vw,2rem)] leading-[0.92]">
               <BlockRevealText depth={0} delay={600}>New project intake open.</BlockRevealText>
             </div>
-            <div className="display shrink-0 leading-none text-black text-[clamp(2.4rem,5vw,5rem)]">
+            <div className="display shrink-0 leading-none text-white/85 text-[clamp(2.4rem,5vw,5rem)]">
               +
             </div>
           </ToneBlock>

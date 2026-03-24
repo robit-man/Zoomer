@@ -131,6 +131,10 @@ function seededValue(value: string) {
   return (hashSeed(value) % 1000) / 1000;
 }
 
+function toneUsesLightText(tone: FocusTone) {
+  return tone !== "light";
+}
+
 function createSeed() {
   if (typeof crypto !== "undefined") {
     const buffer = new Uint32Array(1);
@@ -355,7 +359,7 @@ function FocusTile({
   const exitMid = exitStart + 0.05;
   const exitEnd = exitStart + 0.11;
   const travel = -(90 + visualColumn * 18 + driftSeed * 34);
-  const isDark = tone === "dark";
+  const useLightText = toneUsesLightText(tone);
   const accentA = {
     top: `${18 + driftSeed * 44}%`,
     right: -8 - visualColumn * 2,
@@ -532,14 +536,14 @@ function FocusTile({
       )}
     >
       <CrosshairAccent
-        dark={isDark}
+        dark={useLightText}
         driftX={accentAX}
         driftY={accentAY}
         seed={driftSeed}
         style={accentA}
       />
       <CrosshairAccent
-        dark={isDark}
+        dark={useLightText}
         driftX={accentBX}
         driftY={accentBY}
         seed={driftSeed + 0.41}
@@ -577,7 +581,7 @@ function FocusTile({
         <div
           className={cn(
             "label",
-            isDark ? "text-white/64" : "text-black/45",
+            useLightText ? "text-white/64" : "text-black/45",
           )}
         >
           <BlockRevealText depth={0} delay={exitRank * 100}>{id}</BlockRevealText>
@@ -590,7 +594,7 @@ function FocusTile({
           <div
             className={cn(
               "label mb-3 text-left",
-              isDark ? "text-white/70" : "text-black/52",
+              useLightText ? "text-white/70" : "text-black/52",
             )}
           >
             <BlockRevealText depth={1} delay={exitRank * 100}>{tag}</BlockRevealText>
@@ -610,7 +614,7 @@ function FocusTile({
         <p
           className={cn(
             "max-w-[26rem] text-[10px] leading-[1.45] md:text-[11px]",
-            isDark ? "text-white/85" : "text-black/70",
+            useLightText ? "text-white/85" : "text-black/70",
           )}
         >
           <BlockRevealText depth={3} delay={exitRank * 100}>{detail}</BlockRevealText>
@@ -637,7 +641,7 @@ function ExpandedPanel({
   // Opening: step 0 (width expand) → 1 (height expand, fully open)
   // Closing: step 2 (height shrink) → 3 (width shrink + fade) → onClose()
   const [step, setStep] = useState(0);
-  const isDark = module.tone === "dark" || module.tone === "lime" || module.tone === "blue" || module.tone === "pink";
+  const useLightText = toneUsesLightText(module.tone);
 
   const getAnimateTarget = () => {
     switch (step) {
@@ -676,15 +680,15 @@ function ExpandedPanel({
     >
       <div className="flex shrink-0 items-center justify-between border-b border-current/10 px-5 py-4">
         <div className="flex items-center gap-4">
-          <span className={cn("label", isDark ? "text-white/64" : "text-black/45")}>{module.id}</span>
-          <span className={cn("label", isDark ? "text-white/70" : "text-black/52")}>{module.tag}</span>
+          <span className={cn("label", useLightText ? "text-white/64" : "text-black/45")}>{module.id}</span>
+          <span className={cn("label", useLightText ? "text-white/70" : "text-black/52")}>{module.tag}</span>
         </div>
         <button
           type="button"
           onClick={() => { if (step === 1) setStep(2); }}
           className={cn(
             "label cursor-pointer px-3 py-1 transition-colors",
-            isDark ? "text-white/64 hover:text-white" : "text-black/45 hover:text-black",
+            useLightText ? "text-white/64 hover:text-white" : "text-black/45 hover:text-black",
           )}
         >
           Close
@@ -697,7 +701,7 @@ function ExpandedPanel({
         </h3>
         <p className={cn(
           "max-w-[36rem] text-[11px] leading-[1.5] md:text-[12px]",
-          isDark ? "text-white/85" : "text-black/70",
+          useLightText ? "text-white/85" : "text-black/70",
         )}>
           {module.detail}
         </p>
@@ -706,7 +710,7 @@ function ExpandedPanel({
           {step === 1 && (
             <Suspense fallback={
               <div className="flex h-full items-center justify-center">
-                <div className={cn("label animate-pulse", isDark ? "text-white/40" : "text-black/30")}>
+                <div className={cn("label animate-pulse", useLightText ? "text-white/40" : "text-black/30")}>
                   Loading scene...
                 </div>
               </div>

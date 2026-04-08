@@ -619,8 +619,8 @@ export default function ScrollRoutes({ initial }: { initial: SectionKey }) {
           {!isUltraCompactRail && (
             <div className="flex items-start justify-between gap-6">
               <div>
-                <div className="label text-black/58">Zoomer consulting</div>
-                <div className="mt-2 text-[10px] uppercase tracking-[0.22em] text-black/48">
+                <div className="label text-[#00000022]">Zoomer consulting</div>
+                <div className="mt-2 text-[10px] uppercase tracking-[0.22em] text-[#00000022]">
                   software / hardtech / startup
                 </div>
               </div>

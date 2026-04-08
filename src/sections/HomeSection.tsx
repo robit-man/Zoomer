@@ -202,9 +202,8 @@ function computeFluidColumns(width: number, height: number): number {
     }
   }
 
-  // Mobile fallback: tiles sized by width, grid scrolls vertically.
-  const widthFor2 = (width - GAP_ESTIMATE) / 2;
-  return widthFor2 >= 160 ? 2 : 1;
+  // Mobile fallback: single column so tiles stack end-to-end.
+  return 1;
 }
 
 function computeTileSize(width: number, height: number, columns: number): number {
@@ -528,11 +527,11 @@ function FocusTile({
         "flag-indent-y relative flex h-full min-h-0 select-none flex-col justify-between overflow-hidden border border-black/12 p-4 md:p-5 lg:p-6",
         expandPhase === "idle" && "cursor-pointer",
         isSelected && expandPhase === "expanded" && "invisible",
-        tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
-        tone === "lime" && "border-black/15 bg-[#4a4744] text-[var(--paper)]",
+        tone === "dark" && "border-black/55 bg-[rgba(43,41,38,0.5)] backdrop-blur-[20px] backdrop-brightness-50 text-[var(--paper)]",
+        tone === "lime" && "border-black/15 bg-[rgba(74,71,68,0.5)] backdrop-blur-[20px] backdrop-brightness-50 text-[var(--paper)]",
         tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
-        tone === "blue" && "border-black/15 bg-[var(--grey-mid)] text-[var(--paper)]",
-        tone === "pink" && "border-black/15 bg-[var(--grey-deep)] text-[var(--paper)]",
+        tone === "blue" && "border-black/15 bg-[rgba(90,86,84,0.5)] backdrop-blur-[20px] backdrop-brightness-50 text-[var(--paper)]",
+        tone === "pink" && "border-black/15 bg-[rgba(61,58,56,0.5)] backdrop-blur-[20px] backdrop-brightness-50 text-[var(--paper)]",
       )}
     >
       <CrosshairAccent
@@ -657,11 +656,11 @@ function ExpandedPanel({
     <motion.div
       className={cn(
         "absolute z-30 flex flex-col overflow-hidden border border-black/12",
-        module.tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
-        module.tone === "lime" && "border-black/15 bg-[#4a4744] text-[var(--paper)]",
+        module.tone === "dark" && "border-black/55 bg-[rgba(43,41,38,0.5)] backdrop-blur-[20px] backdrop-brightness-50 text-[var(--paper)]",
+        module.tone === "lime" && "border-black/15 bg-[rgba(74,71,68,0.5)] backdrop-blur-[20px] backdrop-brightness-50 text-[var(--paper)]",
         module.tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
-        module.tone === "blue" && "border-black/15 bg-[var(--grey-mid)] text-[var(--paper)]",
-        module.tone === "pink" && "border-black/15 bg-[var(--grey-deep)] text-[var(--paper)]",
+        module.tone === "blue" && "border-black/15 bg-[rgba(90,86,84,0.5)] backdrop-blur-[20px] backdrop-brightness-50 text-[var(--paper)]",
+        module.tone === "pink" && "border-black/15 bg-[rgba(61,58,56,0.5)] backdrop-blur-[20px] backdrop-brightness-50 text-[var(--paper)]",
       )}
       style={{
         left: "50%",

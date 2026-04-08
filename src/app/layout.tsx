@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Zoomer Consulting",
   description: "Zoomer consulting studio site",
+  icons: {
+    icon: [{ url: "/zoomer.png", type: "image/png" }],
+    shortcut: "/zoomer.png",
+    apple: "/zoomer.png",
+  },
 };
 
 export default function RootLayout({

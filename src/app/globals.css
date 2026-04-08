@@ -247,6 +247,16 @@ textarea {
   .crosshair-drift-c {
     animation: crosshair-drift-c var(--crosshair-dur, 10s) ease-in-out infinite alternate;
   }
+
+  .marching-ants {
+    animation: marching-ants 0.9s linear infinite;
+  }
+}
+
+@keyframes marching-ants {
+  to {
+    stroke-dashoffset: -26;
+  }
 }
 
 @keyframes crosshair-drift-a {

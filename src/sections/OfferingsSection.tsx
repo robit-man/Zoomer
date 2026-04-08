@@ -8,129 +8,46 @@ import {
   type MotionValue,
 } from "framer-motion";
 import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { cn } from "@/components/ui/cn";
 import { BlockRevealText } from "@/components/ui/BlockRevealText";
-import { RevealPanel } from "@/components/ui/RevealPanel";
-
-type TileTone = "dark" | "light" | "lime" | "blue" | "pink";
-
-const offeringColumns = [
-  {
-    id: "01",
-    title: "Software",
-    subtitle: "AI / Apps / Web",
-    summary:
-      "AI agents, app builds, custom websites, UI/UX, user journeys, and monetization design for digital products that need to launch and earn.",
-    tone: "light" as TileTone,
-    tiles: [
-      {
-        label: "Agent Systems",
-        title: "AI agents",
-        detail:
-          "Workflow automation, internal copilots, domain-specific assistants, and task routing built around the decisions your team already makes.",
-        tone: "dark" as TileTone,
-      },
-      {
-        label: "Product Build",
-        title: "App development",
-        detail:
-          "Custom applications for internal ops, client-facing tools, and MVP software products with practical scope, architecture, and delivery.",
-        tone: "lime" as TileTone,
-      },
-      {
-        label: "Surface Stack",
-        title: "Web, UX, monetization",
-        detail:
-          "Custom websites, UI/UX systems, user journeys, and monetization structure tied directly to conversion, clarity, and product fit.",
-        tone: "blue" as TileTone,
-      },
-    ],
-  },
-  {
-    id: "02",
-    title: "Hardtech + Fabrication",
-    subtitle: "CAD / Electronics / Print",
-    summary:
-      "Physical product support from drafting through prototyping: AutoCAD, small-electronics bench work, firmware and hardware development, UI support, and printed part production.",
-    tone: "dark" as TileTone,
-    tiles: [
-      {
-        label: "Draft Pack",
-        title: "AutoCAD systems",
-        detail:
-          "Measured drawings, assembly layouts, part geometry, tolerance-aware planning, and fabrication-ready drafting support for physical builds.",
-        tone: "light" as TileTone,
-      },
-      {
-        label: "Prototype Bench",
-        title: "Electronics + firmware",
-        detail:
-          "Rapid prototyping of small electronics, firmware and hardware iteration, bench validation, and embedded interface development.",
-        tone: "pink" as TileTone,
-      },
-      {
-        label: "Build Output",
-        title: "3D printing + assembly",
-        detail:
-          "Low-to-medium complexity parts manufacturing, print prep, fit checks, and assembly support to move concepts into handled objects.",
-        tone: "dark" as TileTone,
-      },
-    ],
-  },
-  {
-    id: "03",
-    title: "Business / Startup Consulting",
-    subtitle: "Feasibility / Market / Structure",
-    summary:
-      "General consulting for founders and operators who need the product, business, and market case sharpened before committing bigger money.",
-    tone: "light" as TileTone,
-    tiles: [
-      {
-        label: "Discovery Pass",
-        title: "Feasibility + tech discovery",
-        detail:
-          "Technology product feasibility analysis, constraint mapping, and technology discovery to determine what is actually buildable and worth pursuing.",
-        tone: "dark" as TileTone,
-      },
-      {
-        label: "Company Model",
-        title: "Business structure",
-        detail:
-          "Business structure, company structuring, offer definition, and operating decisions that support the product and the market strategy.",
-        tone: "light" as TileTone,
-      },
-      {
-        label: "Market Story",
-        title: "Pitch decks + research",
-        detail:
-          "Market research, pitch deck development, and narrative framing that help explain the opportunity clearly to partners, clients, or investors.",
-        tone: "lime" as TileTone,
-      },
-    ],
-  },
-] as const;
+import {
+  NODES,
+  EDGES,
+  buildPath,
+  computeLayout,
+  createNodeRuntimes,
+  type FlowNodeDef,
+  type NodeRuntime,
+  type TileTone,
+} from "@/sections/offerings/flow";
 
 function seededValue(value: string) {
   let hash = 0;
-  for (let index = 0; index < value.length; index += 1) {
-    hash = (hash * 33 + value.charCodeAt(index)) % 2147483647;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 33 + value.charCodeAt(i)) % 2147483647;
   }
   return (hash % 1000) / 1000;
 }
 
-function toneUsesLightText(tone: TileTone) {
-  return tone !== "light";
+function toneClass(tone: TileTone) {
+  if (tone === "dark") return "border-black/55 bg-[var(--graphite)] text-[var(--paper)]";
+  if (tone === "light") return "border-black/12 bg-[rgba(252,251,247,0.94)] text-[var(--ink)]";
+  if (tone === "lime") return "border-black/15 bg-[#4a4744] text-[var(--paper)]";
+  if (tone === "blue") return "border-black/15 bg-[var(--grey-mid)] text-[var(--paper)]";
+  return "border-black/15 bg-[var(--grey-deep)] text-[var(--paper)]";
 }
 
+const usesLightText = (tone: TileTone) => tone !== "light";
+
 function CrosshairAccent({
-  dark,
-  driftX,
-  driftY,
-  seed,
-  style,
+  dark, driftX, driftY, seed, style,
 }: {
   dark: boolean;
   driftX: MotionValue<number>;
@@ -139,238 +56,88 @@ function CrosshairAccent({
   style: CSSProperties;
 }) {
   const driftClass =
-    seed < 0.33
-      ? "crosshair-drift-a"
-      : seed < 0.66
-        ? "crosshair-drift-b"
-        : "crosshair-drift-c";
+    seed < 0.33 ? "crosshair-drift-a" : seed < 0.66 ? "crosshair-drift-b" : "crosshair-drift-c";
   const duration = 8 + seed * 12;
-
   return (
     <span
       className={cn("pointer-events-none absolute z-10", driftClass)}
-      style={{
-        ...style,
-        "--crosshair-dur": `${duration.toFixed(1)}s`,
-      } as CSSProperties}
+      style={{ ...style, "--crosshair-dur": `${duration.toFixed(1)}s` } as CSSProperties}
     >
-      <motion.span
-        className="relative block h-5 w-5"
-        style={{ x: driftX, y: driftY }}
-      >
-        <span
-          className={cn(
-            "absolute left-1/2 top-0 h-[35%] w-px -translate-x-1/2",
-            dark ? "bg-white/32" : "bg-black/24",
-          )}
-        />
-        <span
-          className={cn(
-            "absolute bottom-0 left-1/2 h-[35%] w-px -translate-x-1/2",
-            dark ? "bg-white/32" : "bg-black/24",
-          )}
-        />
-        <span
-          className={cn(
-            "absolute left-0 top-1/2 h-px w-[35%] -translate-y-1/2",
-            dark ? "bg-white/32" : "bg-black/24",
-          )}
-        />
-        <span
-          className={cn(
-            "absolute right-0 top-1/2 h-px w-[35%] -translate-y-1/2",
-            dark ? "bg-white/32" : "bg-black/24",
-          )}
-        />
+      <motion.span className="relative block h-5 w-5" style={{ x: driftX, y: driftY }}>
+        <span className={cn("absolute left-1/2 top-0 h-[35%] w-px -translate-x-1/2", dark ? "bg-white/32" : "bg-black/24")} />
+        <span className={cn("absolute bottom-0 left-1/2 h-[35%] w-px -translate-x-1/2", dark ? "bg-white/32" : "bg-black/24")} />
+        <span className={cn("absolute left-0 top-1/2 h-px w-[35%] -translate-y-1/2", dark ? "bg-white/32" : "bg-black/24")} />
+        <span className={cn("absolute right-0 top-1/2 h-px w-[35%] -translate-y-1/2", dark ? "bg-white/32" : "bg-black/24")} />
       </motion.span>
     </span>
   );
 }
 
-function ToneBlock({
-  children,
-  className,
-  tone,
+function FlowNodeCard({
+  def, index, progress, driftX, driftY, registerRef,
+  onPointerDown, onPointerMove, onPointerUp,
 }: {
-  children: React.ReactNode;
-  className?: string;
-  tone: TileTone;
+  def: FlowNodeDef;
+  index: number;
+  progress: MotionValue<number>;
+  driftX: MotionValue<number>;
+  driftY: MotionValue<number>;
+  registerRef: (el: HTMLDivElement | null) => void;
+  onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerUp: (e: ReactPointerEvent<HTMLDivElement>) => void;
 }) {
+  const start = 0.12 + index * 0.04;
+  const end = 0.58 + index * 0.04;
+  const opacity = useTransform(progress, [start, end], [0.12, 1]);
+  const seed = seededValue(`${def.id}-${def.title}`);
+  const light = usesLightText(def.tone);
+  const aX = useTransform(driftX, (v) => v * (8 + seed * 8));
+  const aY = useTransform(driftY, (v) => v * (10 + seed * 9));
+  const bX = useTransform(driftX, (v) => v * (-10 - seed * 9));
+  const bY = useTransform(driftY, (v) => v * (-8 - seed * 8));
+
   return (
     <div
-      className={cn(
-        "relative overflow-hidden border border-black/12",
-        tone === "dark" && "border-black/55 bg-[var(--graphite)] text-[var(--paper)]",
-        tone === "light" && "bg-[rgba(252,251,247,0.94)] text-[var(--ink)]",
-        tone === "lime" && "border-black/15 bg-[#4a4744] text-[var(--paper)]",
-        tone === "blue" && "border-black/15 bg-[var(--grey-mid)] text-[var(--paper)]",
-        tone === "pink" && "border-black/15 bg-[var(--grey-deep)] text-[var(--paper)]",
-        className,
-      )}
+      ref={registerRef}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      style={{
+        position: "absolute",
+        left: 0,
+        top: 0,
+        width: def.w,
+        height: def.h,
+        touchAction: "none",
+        willChange: "transform",
+      }}
+      className="select-none cursor-grab active:cursor-grabbing"
     >
-      {children}
-    </div>
-  );
-}
-
-function ServiceTile({
-  driftX,
-  driftY,
-  index,
-  progress,
-  tile,
-}: {
-  driftX: MotionValue<number>;
-  driftY: MotionValue<number>;
-  index: number;
-  progress: MotionValue<number>;
-  tile: (typeof offeringColumns)[number]["tiles"][number];
-}) {
-  const seed = seededValue(`${tile.title}-${index}`);
-  const start = 0.18 + index * 0.08;
-  const end = 0.68 + index * 0.08;
-  const opacity = useTransform(progress, [start, end], [0.12, 1]);
-  const x = useTransform(progress, [start, end], [20 + index * 6, 0]);
-  const useLightText = toneUsesLightText(tile.tone);
-  const accentAX = useTransform(driftX, (value) => value * (8 + seed * 8));
-  const accentAY = useTransform(driftY, (value) => value * (10 + seed * 9));
-  const accentBX = useTransform(driftX, (value) => value * (-10 - seed * 9));
-  const accentBY = useTransform(driftY, (value) => value * (-8 - seed * 8));
-
-  return (
-    <RevealPanel delay={index * 80} className="min-h-0">
-      <motion.div style={{ opacity, x }} className="min-h-0">
-        <ToneBlock
-        tone={tile.tone}
-        className="flex h-full min-h-[180px] flex-col justify-between p-4 md:p-5 xl:min-h-0"
-      >
-        <CrosshairAccent
-          dark={useLightText}
-          driftX={accentAX}
-          driftY={accentAY}
-          seed={seed}
-          style={{ top: `${18 + seed * 40}%`, right: -8 }}
-        />
-        <CrosshairAccent
-          dark={useLightText}
-          driftX={accentBX}
-          driftY={accentBY}
-          seed={seed + 0.38}
-          style={{ bottom: `${14 + seed * 26}%`, left: -8 }}
-        />
-
-        <div className={cn("label", useLightText ? "text-white/64" : "text-black/44")}>
-          <BlockRevealText depth={0} delay={index * 120}>{tile.label}</BlockRevealText>
-        </div>
-        <div>
-          <h4 className="display max-w-[14ch] text-[clamp(1.12rem,1.42vw,1.78rem)] leading-[0.92]">
-            <BlockRevealText depth={1} delay={index * 120}>{tile.title}</BlockRevealText>
-          </h4>
-          <p
-            className={cn(
-              "mt-3 max-w-[24rem] text-[10px] leading-[1.45] md:text-[11px]",
-              useLightText ? "text-white/85" : "text-black/68",
-            )}
-          >
-            <BlockRevealText depth={2} delay={index * 120}>{tile.detail}</BlockRevealText>
-          </p>
-        </div>
-        </ToneBlock>
-      </motion.div>
-    </RevealPanel>
-  );
-}
-
-function LaneColumn({
-  column,
-  driftX,
-  driftY,
-  index,
-  progress,
-}: {
-  column: (typeof offeringColumns)[number];
-  driftX: MotionValue<number>;
-  driftY: MotionValue<number>;
-  index: number;
-  progress: MotionValue<number>;
-}) {
-  const start = 0.08 + index * 0.12;
-  const end = 0.62 + index * 0.12;
-  const opacity = useTransform(progress, [start, end], [0.2, 1]);
-  const x = useTransform(progress, [start, end], [48 + index * 12, 0]);
-  const seed = seededValue(`${column.title}-${column.id}`);
-  const useLightText = toneUsesLightText(column.tone);
-  const accentAX = useTransform(driftX, (value) => value * (10 + seed * 10));
-  const accentAY = useTransform(driftY, (value) => value * (12 + seed * 8));
-  const accentBX = useTransform(driftX, (value) => value * (-12 - seed * 8));
-  const accentBY = useTransform(driftY, (value) => value * (-10 - seed * 8));
-
-  return (
-    <RevealPanel delay={index * 120} className="min-h-0 overflow-hidden xl:h-full">
-      <motion.article style={{ opacity, x }} className="h-full">
-        <ToneBlock
-        tone={column.tone}
-        className="grid h-full min-h-[580px] grid-rows-[auto_minmax(0,1fr)] xl:min-h-0"
-      >
-        <CrosshairAccent
-          dark={useLightText}
-          driftX={accentAX}
-          driftY={accentAY}
-          seed={seed}
-          style={{ top: 34, right: -9 }}
-        />
-        <CrosshairAccent
-          dark={useLightText}
-          driftX={accentBX}
-          driftY={accentBY}
-          seed={seed + 0.27}
-          style={{ bottom: 42, left: -9 }}
-        />
-
-        <div className={cn("border-b px-4 py-4 md:px-5 md:py-5", useLightText ? "border-white/10" : "border-black/10")}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className={cn("label", useLightText ? "text-white/64" : "text-black/44")}>
-                <BlockRevealText depth={0} delay={index * 200}>{column.id}</BlockRevealText>
-              </div>
-              <h3 className="display mt-3 max-w-min text-[clamp(1.52rem,1.95vw,2.45rem)] leading-[0.9]">
-                <BlockRevealText depth={1} delay={index * 200}>{column.title}</BlockRevealText>
-              </h3>
-            </div>
-            <div
-              className={cn(
-                "max-w-[8rem] text-right text-[10px] uppercase tracking-[0.18em]",
-                useLightText ? "text-white/64" : "text-black/38",
-              )}
-            >
-              <BlockRevealText depth={1} delay={index * 200}>{column.subtitle}</BlockRevealText>
-            </div>
+      <motion.div style={{ opacity }} className="h-full w-full">
+        <div
+          className={cn(
+            "relative flex h-full w-full flex-col justify-between overflow-hidden border p-4 shadow-[0_18px_44px_rgba(0,0,0,0.14)] md:p-5",
+            toneClass(def.tone),
+          )}
+        >
+          <CrosshairAccent dark={light} driftX={aX} driftY={aY} seed={seed} style={{ top: 14, right: -8 }} />
+          <CrosshairAccent dark={light} driftX={bX} driftY={bY} seed={seed + 0.42} style={{ bottom: 16, left: -8 }} />
+          <div className={cn("label", light ? "text-white/62" : "text-black/44")}>
+            <BlockRevealText depth={0} delay={index * 80}>{def.label}</BlockRevealText>
           </div>
-          <p
-            className={cn(
-              "mt-4 max-w-[22rem] text-[10px] leading-[1.45] md:text-[11px]",
-              useLightText ? "text-white/82" : "text-black/66",
-            )}
-          >
-            <BlockRevealText depth={2} delay={index * 200}>{column.summary}</BlockRevealText>
-          </p>
+          <div>
+            <h3 className="display max-w-[13ch] text-[clamp(1rem,1.35vw,1.55rem)] leading-[0.92]">
+              <BlockRevealText depth={1} delay={index * 80}>{def.title}</BlockRevealText>
+            </h3>
+            <p className={cn("mt-2.5 max-w-[22rem] text-[10px] leading-[1.45] md:text-[11px]", light ? "text-white/82" : "text-black/68")}>
+              <BlockRevealText depth={2} delay={index * 80}>{def.detail}</BlockRevealText>
+            </p>
+          </div>
         </div>
-
-        <div className="grid min-h-0 grid-rows-3 gap-2 p-2 md:gap-3 md:p-3">
-          {column.tiles.map((tile, tileIndex) => (
-            <ServiceTile
-              key={tile.title}
-              driftX={driftX}
-              driftY={driftY}
-              index={tileIndex}
-              progress={progress}
-              tile={tile}
-            />
-          ))}
-        </div>
-        </ToneBlock>
-      </motion.article>
-    </RevealPanel>
+      </motion.div>
+    </div>
   );
 }
 
@@ -385,17 +152,219 @@ export default function OfferingsSection({
   const driftX = useSpring(pointerX, { stiffness: 80, damping: 24, mass: 0.5 });
   const driftY = useSpring(pointerY, { stiffness: 80, damping: 24, mass: 0.5 });
 
-  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const normalizedX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-    const normalizedY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-    pointerX.set(normalizedX);
-    pointerY.set(normalizedY);
-  };
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const nodeElsRef = useRef<Map<string, HTMLDivElement | null>>(new Map());
+  const edgeElsRef = useRef<Map<string, SVGPathElement | null>>(new Map());
+  const nodesRef = useRef<NodeRuntime[]>(createNodeRuntimes());
+  const panRef = useRef({
+    x: 0,
+    y: 0,
+    panning: false,
+    startPointerX: 0,
+    startPointerY: 0,
+    startPanX: 0,
+    startPanY: 0,
+  });
 
+  const [canvasH, setCanvasH] = useState(620);
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const recompute = () => {
+      const w = el.clientWidth;
+      if (w <= 0) return;
+      const { homes, totalH } = computeLayout(w);
+      for (const n of nodesRef.current) {
+        const home = homes.get(n.def.id);
+        if (!home) continue;
+        n.homeX = home.x;
+        n.homeY = home.y;
+        if (!n.initialized) {
+          n.x = home.x;
+          n.y = home.y;
+          n.initialized = true;
+        }
+      }
+      setCanvasH(totalH);
+    };
+    recompute();
+    const obs = new ResizeObserver(recompute);
+    obs.observe(el);
+    window.addEventListener("resize", recompute);
+    return () => {
+      obs.disconnect();
+      window.removeEventListener("resize", recompute);
+    };
+  }, []);
+
+  useEffect(() => {
+    let raf = 0;
+    let prev = performance.now();
+    const idMap = new Map<string, NodeRuntime>();
+    for (const n of nodesRef.current) idMap.set(n.def.id, n);
+
+    const step = (now: number) => {
+      const dt = Math.min(0.05, (now - prev) / 1000);
+      prev = now;
+      const nodes = nodesRef.current;
+
+      // Gentle spring toward layout home — soft enough that boxes "float freely".
+      const k = 4.5;
+      const damp = 0.88;
+      for (const n of nodes) {
+        if (n.dragging) {
+          n.vx = 0;
+          n.vy = 0;
+          continue;
+        }
+        const dx = n.homeX - n.x;
+        const dy = n.homeY - n.y;
+        n.vx = (n.vx + dx * k * dt) * damp;
+        n.vy = (n.vy + dy * k * dt) * damp;
+        n.x += n.vx * dt * 60;
+        n.y += n.vy * dt * 60;
+      }
+
+      // Pairwise AABB repulsion so neighbors make room for each other.
+      const PAD = 16;
+      for (let i = 0; i < nodes.length; i += 1) {
+        for (let j = i + 1; j < nodes.length; j += 1) {
+          const a = nodes[i];
+          const b = nodes[j];
+          const dx = b.x + b.def.w / 2 - (a.x + a.def.w / 2);
+          const dy = b.y + b.def.h / 2 - (a.y + a.def.h / 2);
+          const halfW = (a.def.w + b.def.w) / 2 + PAD;
+          const halfH = (a.def.h + b.def.h) / 2 + PAD;
+          const ox = halfW - Math.abs(dx);
+          const oy = halfH - Math.abs(dy);
+          if (ox > 0 && oy > 0) {
+            let px = 0;
+            let py = 0;
+            if (ox < oy) px = dx < 0 ? ox : -ox;
+            else py = dy < 0 ? oy : -oy;
+            const af = !a.dragging;
+            const bf = !b.dragging;
+            if (af && bf) {
+              a.x += px * 0.5;
+              a.y += py * 0.5;
+              b.x -= px * 0.5;
+              b.y -= py * 0.5;
+            } else if (af) {
+              a.x += px;
+              a.y += py;
+            } else if (bf) {
+              b.x -= px;
+              b.y -= py;
+            }
+          }
+        }
+      }
+
+      // Generous clamp — with pan enabled the viewport can chase nodes that
+      // have been dragged far from their home positions.
+      const cw = containerRef.current?.clientWidth ?? 0;
+      const ch = containerRef.current?.clientHeight ?? 0;
+      for (const n of nodes) {
+        if (cw > 0) n.x = Math.max(-cw, Math.min(cw * 2, n.x));
+        n.y = Math.max(-ch, Math.min(ch * 2, n.y));
+      }
+
+      for (const n of nodes) {
+        const el = nodeElsRef.current.get(n.def.id);
+        if (el) el.style.transform = `translate(${n.x.toFixed(2)}px, ${n.y.toFixed(2)}px)`;
+      }
+      for (const e of EDGES) {
+        const pa = idMap.get(e.from);
+        const pb = idMap.get(e.to);
+        const path = edgeElsRef.current.get(e.id);
+        if (pa && pb && path) path.setAttribute("d", buildPath(pa, pb, e.kind));
+      }
+
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    pointerX.set(((e.clientX - rect.left) / rect.width - 0.5) * 2);
+    pointerY.set(((e.clientY - rect.top) / rect.height - 0.5) * 2);
+  };
   const handlePointerLeave = () => {
     pointerX.set(0);
     pointerY.set(0);
+  };
+
+  const beginDrag = (id: string) => (e: ReactPointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    const n = nodesRef.current.find((x) => x.def.id === id);
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!n || !rect) return;
+    const pan = panRef.current;
+    n.dragging = true;
+    n.dragOffX = e.clientX - rect.left - pan.x - n.x;
+    n.dragOffY = e.clientY - rect.top - pan.y - n.y;
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    } catch {
+      /* ignored */
+    }
+  };
+  const moveDrag = (id: string) => (e: ReactPointerEvent<HTMLDivElement>) => {
+    const n = nodesRef.current.find((x) => x.def.id === id);
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!n || !rect || !n.dragging) return;
+    const pan = panRef.current;
+    n.x = e.clientX - rect.left - pan.x - n.dragOffX;
+    n.y = e.clientY - rect.top - pan.y - n.dragOffY;
+  };
+  const endDrag = (id: string) => (e: ReactPointerEvent<HTMLDivElement>) => {
+    const n = nodesRef.current.find((x) => x.def.id === id);
+    if (!n) return;
+    n.dragging = false;
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+    } catch {
+      /* ignored */
+    }
+  };
+
+  const beginPan = (e: ReactPointerEvent<HTMLDivElement>) => {
+    // Nodes stopPropagation on their own pointerDown and the SVG has
+    // pointer-events: none, so this handler only fires on empty canvas.
+    const pan = panRef.current;
+    pan.panning = true;
+    pan.startPointerX = e.clientX;
+    pan.startPointerY = e.clientY;
+    pan.startPanX = pan.x;
+    pan.startPanY = pan.y;
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    } catch {
+      /* ignored */
+    }
+  };
+  const movePan = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const pan = panRef.current;
+    if (!pan.panning) return;
+    pan.x = pan.startPanX + (e.clientX - pan.startPointerX);
+    pan.y = pan.startPanY + (e.clientY - pan.startPointerY);
+    if (contentRef.current) {
+      contentRef.current.style.transform = `translate(${pan.x.toFixed(2)}px, ${pan.y.toFixed(2)}px)`;
+    }
+  };
+  const endPan = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const pan = panRef.current;
+    if (!pan.panning) return;
+    pan.panning = false;
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+    } catch {
+      /* ignored */
+    }
   };
 
   return (
@@ -404,17 +373,100 @@ export default function OfferingsSection({
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      <div className="mx-auto grid w-full max-w-[84rem] gap-2 md:gap-3 xl:h-[min(50rem,calc(100svh-2.5rem))] xl:grid-cols-3">
-        {offeringColumns.map((column, index) => (
-          <LaneColumn
-            key={column.id}
-            column={column}
-            driftX={driftX}
-            driftY={driftY}
-            index={index}
-            progress={entryProgress}
-          />
-        ))}
+      <div className="mx-auto w-full max-w-[96rem] px-1 md:px-2">
+        <header className="mb-4 flex flex-wrap items-end justify-between gap-3 px-1">
+          <div>
+            <div className="label text-black/42">02 · Delivery flow</div>
+            <h2 className="display mt-2 text-[clamp(1.25rem,1.78vw,2.05rem)] leading-[0.9]">
+              <BlockRevealText depth={0}>INTAKE → REFINE → HARDEN → SHIP</BlockRevealText>
+            </h2>
+          </div>
+          <p className="max-w-[26rem] text-[10px] leading-[1.5] text-black/60 md:text-[11px]">
+            <BlockRevealText depth={1}>
+              Every stage is visible, draggable, and wired together with live splines. Drag a box — the neighbors make room, the flow stays intact, and stages wrap downward when space runs out.
+            </BlockRevealText>
+          </p>
+        </header>
+
+        <motion.div
+          ref={containerRef}
+          style={{ height: canvasH, opacity: entryProgress, touchAction: "none" }}
+          className="relative w-full overflow-hidden border border-black/10 cursor-grab active:cursor-grabbing"
+          onPointerDown={beginPan}
+          onPointerMove={movePan}
+          onPointerUp={endPan}
+          onPointerCancel={endPan}
+        >
+          <div
+            ref={contentRef}
+            className="absolute inset-0"
+            style={{ transform: "translate(0px, 0px)", willChange: "transform" }}
+          >
+          <svg
+            className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <marker
+                id="flow-arrow"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink)" fillOpacity="0.72" />
+              </marker>
+              <marker
+                id="loop-arrow"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink)" fillOpacity="0.52" />
+              </marker>
+            </defs>
+            {EDGES.map((e) => (
+              <path
+                key={e.id}
+                ref={(el) => {
+                  edgeElsRef.current.set(e.id, el);
+                }}
+                d=""
+                fill="none"
+                stroke="var(--ink)"
+                strokeWidth={e.kind === "loop-return" ? 1 : 1.4}
+                strokeOpacity={e.kind === "flow" ? 0.72 : e.kind === "loop" ? 0.56 : 0.4}
+                strokeDasharray={e.kind === "loop-return" ? "5 4" : "8 5"}
+                strokeLinecap="round"
+                className="marching-ants"
+                markerEnd={e.kind === "flow" ? "url(#flow-arrow)" : "url(#loop-arrow)"}
+              />
+            ))}
+          </svg>
+
+          {NODES.map((def, i) => (
+            <FlowNodeCard
+              key={def.id}
+              def={def}
+              index={i}
+              progress={entryProgress}
+              driftX={driftX}
+              driftY={driftY}
+              registerRef={(el) => {
+                nodeElsRef.current.set(def.id, el);
+              }}
+              onPointerDown={beginDrag(def.id)}
+              onPointerMove={moveDrag(def.id)}
+              onPointerUp={endDrag(def.id)}
+            />
+          ))}
+          </div>
+        </motion.div>
       </div>
     </div>
   );
